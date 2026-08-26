@@ -1,333 +1,236 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-const BACKEND = "http://127.0.0.1:8000";
+type Language = {
+  code: string;
+  name: string;
+  native: string;
+};
 
-const languages: Record<
-  string,
-  {
-    name: string;
-    speech: string;
-  }
-> = {
+const languages: Record<string, Language> = {
+  en: { code: "en", name: "English", native: "English" },
+  hi: { code: "hi", name: "Hindi", native: "हिंदी" },
+  ta: { code: "ta", name: "Tamil", native: "தமிழ்" },
+  te: { code: "te", name: "Telugu", native: "తెలుగు" },
+  bn: { code: "bn", name: "Bengali", native: "বাংলা" },
+  mr: { code: "mr", name: "Marathi", native: "मराठी" },
+  ml: { code: "ml", name: "Malayalam", native: "മലയാളം" },
+  gu: { code: "gu", name: "Gujarati", native: "ગુજરાતી" },
+};
+
+const text: Record<string, Record<string, string>> = {
   en: {
-    name: "English",
-    speech: "en-IN",
+    title: "WeatherGPT",
+    search: "Search a city",
+    searchButton: "Search",
+    location: "Use my current location",
+    temperature: "Temperature",
+    humidity: "Humidity",
+    wind: "Wind",
+    forecast: "Forecast",
+    chatbot: "Weather Assistant",
+    ask: "Ask me anything about weather...",
+    send: "Send",
+    listening: "Listening...",
+    welcome: "Hello! How can I help you with the weather?",
   },
+
   hi: {
-    name: "हिन्दी",
-    speech: "hi-IN",
+    title: "WeatherGPT",
+    search: "शहर खोजें",
+    searchButton: "खोजें",
+    location: "मेरी वर्तमान स्थिति का उपयोग करें",
+    temperature: "तापमान",
+    humidity: "नमी",
+    wind: "हवा",
+    forecast: "पूर्वानुमान",
+    chatbot: "मौसम सहायक",
+    ask: "मौसम के बारे में कुछ भी पूछें...",
+    send: "भेजें",
+    listening: "सुन रहा हूँ...",
+    welcome: "नमस्ते! मैं मौसम के बारे में आपकी कैसे मदद कर सकता हूँ?",
   },
-  te: {
-    name: "తెలుగు",
-    speech: "te-IN",
-  },
+
   ta: {
-    name: "தமிழ்",
-    speech: "ta-IN",
+    title: "WeatherGPT",
+    search: "நகரத்தைத் தேடுங்கள்",
+    searchButton: "தேடு",
+    location: "எனது தற்போதைய இருப்பிடத்தைப் பயன்படுத்தவும்",
+    temperature: "வெப்பநிலை",
+    humidity: "ஈரப்பதம்",
+    wind: "காற்று",
+    forecast: "முன்னறிவிப்பு",
+    chatbot: "வானிலை உதவியாளர்",
+    ask: "வானிலை பற்றி எதையும் கேளுங்கள்...",
+    send: "அனுப்பு",
+    listening: "கேட்கிறது...",
+    welcome: "வணக்கம்! வானிலை பற்றி நான் உங்களுக்கு எப்படி உதவலாம்?",
   },
-  mr: {
-    name: "मराठी",
-    speech: "mr-IN",
+
+  te: {
+    title: "WeatherGPT",
+    search: "నగరాన్ని వెతకండి",
+    searchButton: "వెతకండి",
+    location: "నా ప్రస్తుత స్థానాన్ని ఉపయోగించండి",
+    temperature: "ఉష్ణోగ్రత",
+    humidity: "తేమ",
+    wind: "గాలి",
+    forecast: "వాతావరణ సూచన",
+    chatbot: "వాతావరణ సహాయకుడు",
+    ask: "వాతావరణం గురించి ఏదైనా అడగండి...",
+    send: "పంపండి",
+    listening: "వింటోంది...",
+    welcome: "నమస్కారం! వాతావరణం గురించి నేను మీకు ఎలా సహాయం చేయగలను?",
   },
+
   bn: {
-    name: "বাংলা",
-    speech: "bn-IN",
+    title: "WeatherGPT",
+    search: "শহর অনুসন্ধান করুন",
+    searchButton: "অনুসন্ধান",
+    location: "আমার বর্তমান অবস্থান ব্যবহার করুন",
+    temperature: "তাপমাত্রা",
+    humidity: "আর্দ্রতা",
+    wind: "বাতাস",
+    forecast: "পূর্বাভাস",
+    chatbot: "আবহাওয়া সহকারী",
+    ask: "আবহাওয়া সম্পর্কে কিছু জিজ্ঞাসা করুন...",
+    send: "পাঠান",
+    listening: "শুনছি...",
+    welcome: "হ্যালো! আবহাওয়া সম্পর্কে আমি কীভাবে সাহায্য করতে পারি?",
   },
-  pa: {
-    name: "ਪੰਜਾਬੀ",
-    speech: "pa-IN",
+
+  mr: {
+    title: "WeatherGPT",
+    search: "शहर शोधा",
+    searchButton: "शोधा",
+    location: "माझे वर्तमान स्थान वापरा",
+    temperature: "तापमान",
+    humidity: "आर्द्रता",
+    wind: "वारा",
+    forecast: "हवामान अंदाज",
+    chatbot: "हवामान सहाय्यक",
+    ask: "हवामानाबद्दल काहीही विचारा...",
+    send: "पाठवा",
+    listening: "ऐकत आहे...",
+    welcome: "नमस्कार! हवामानाबद्दल मी तुमची कशी मदत करू शकतो?",
   },
-  ur: {
-    name: "اردو",
-    speech: "ur-PK",
+
+  ml: {
+    title: "WeatherGPT",
+    search: "നഗരം തിരയുക",
+    searchButton: "തിരയുക",
+    location: "എന്റെ നിലവിലെ സ്ഥാനം ഉപയോഗിക്കുക",
+    temperature: "താപനില",
+    humidity: "ഈർപ്പം",
+    wind: "കാറ്റ്",
+    forecast: "കാലാവസ്ഥാ പ്രവചനം",
+    chatbot: "കാലാവസ്ഥാ സഹായി",
+    ask: "കാലാവസ്ഥയെക്കുറിച്ച് എന്തും ചോദിക്കൂ...",
+    send: "അയയ്ക്കുക",
+    listening: "കേൾക്കുന്നു...",
+    welcome: "നമസ്കാരം! കാലാവസ്ഥയെക്കുറിച്ച് എങ്ങനെ സഹായിക്കാം?",
   },
-  es: {
-    name: "Español",
-    speech: "es-ES",
-  },
-  fr: {
-    name: "Français",
-    speech: "fr-FR",
-  },
-  de: {
-    name: "Deutsch",
-    speech: "de-DE",
-  },
-  ja: {
-    name: "日本語",
-    speech: "ja-JP",
+
+  gu: {
+    title: "WeatherGPT",
+    search: "શહેર શોધો",
+    searchButton: "શોધો",
+    location: "મારા વર્તમાન સ્થાનનો ઉપયોગ કરો",
+    temperature: "તાપમાન",
+    humidity: "ભેજ",
+    wind: "પવન",
+    forecast: "હવામાન આગાહી",
+    chatbot: "હવામાન સહાયક",
+    ask: "હવામાન વિશે કંઈપણ પૂછો...",
+    send: "મોકલો",
+    listening: "સાંભળી રહ્યું છે...",
+    welcome: "નમસ્તે! હું હવામાન વિશે તમારી કેવી રીતે મદદ કરી શકું?",
   },
 };
 
 export default function WeatherPage() {
-  const params = useSearchParams();
-
-  const location = params.get("location");
-  const lat = params.get("lat");
-  const lon = params.get("lon");
-
-  const langCode =
-    params.get("lang") || "en";
-
-  const selectedLanguage =
-    languages[langCode] || languages.en;
-
-  const [weather, setWeather] =
-    useState<any>(null);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  const [safePlaces, setSafePlaces] =
-    useState<any[]>([]);
-
-  const [safeLoading, setSafeLoading] =
-    useState(false);
-
-  const [chatOpen, setChatOpen] =
-    useState(false);
-
-  const [chatMessage, setChatMessage] =
-    useState("");
-
-  const [chatReply, setChatReply] =
-    useState("");
-
-  const [chatLoading, setChatLoading] =
-    useState(false);
-
-  const [listening, setListening] =
-    useState(false);
-
-  const hasAlert =
-    weather?.alerts?.length > 0;
-
-  const weatherContext =
-    useMemo(() => {
-      if (!weather) {
-        return "";
-      }
-
-      return JSON.stringify({
-        location:
-          weather.location,
-        current:
-          weather.current,
-        alerts:
-          weather.alerts,
-      });
-    }, [weather]);
+  const [language, setLanguage] = useState("en");
+  const [city, setCity] = useState("");
+  const [message, setMessage] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [chatMessages, setChatMessages] = useState<string[]>([]);
 
   useEffect(() => {
-    loadWeather();
-  }, [location, lat, lon, langCode]);
+    const saved = localStorage.getItem("weatherGPTLanguage");
 
-  async function loadWeather() {
-    setLoading(true);
-    setError("");
-
-    try {
-      let query = "";
-
-      if (lat && lon) {
-        query = `${lat},${lon}`;
-      } else if (location) {
-        query = location;
-      } else {
-        throw new Error(
-          "No location was selected."
-        );
-      }
-
-      const response = await fetch(
-        `${BACKEND}/weather`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            location: query,
-            language: langCode,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.detail ||
-            "Unable to get weather"
-        );
-      }
-
-      setWeather(data);
-
-      if (
-        data.location?.lat &&
-        data.location?.lon
-      ) {
-        loadSafePlaces(
-          data.location.lat,
-          data.location.lon
-        );
-      }
-    } catch (err: any) {
-      setError(
-        err.message ||
-          "Unable to load weather."
-      );
-    } finally {
-      setLoading(false);
+    if (saved && languages[saved]) {
+      setLanguage(saved);
     }
-  }
+  }, []);
 
-  async function loadSafePlaces(
-    latitude: number,
-    longitude: number
-  ) {
-    setSafeLoading(true);
+  const t = text[language] || text.en;
 
-    try {
-      const response = await fetch(
-        `${BACKEND}/safe-places`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            latitude,
-            longitude,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setSafePlaces(
-          data.places || []
-        );
-      }
-    } catch (error) {
-      console.log(
-        "Safe place error:",
-        error
-      );
-    } finally {
-      setSafeLoading(false);
-    }
-  }
-
-  async function sendChat() {
-    if (!chatMessage.trim()) {
-      return;
-    }
-
-    setChatLoading(true);
-
-    try {
-      const response = await fetch(
-        `${BACKEND}/chat`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            message: chatMessage,
-            language:
-              selectedLanguage.name,
-            weather_context:
-              weatherContext,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.detail ||
-            "Chat failed"
-        );
-      }
-
-      setChatReply(data.answer);
-
-      speak(data.answer);
-    } catch (error) {
-      setChatReply(
-        "I couldn't connect to the AI assistant."
-      );
-    } finally {
-      setChatLoading(false);
-    }
-  }
-
-  function speak(text: string) {
-    if (
-      !("speechSynthesis" in window)
-    ) {
-      return;
-    }
+  const speak = (words: string) => {
+    if (typeof window === "undefined") return;
 
     window.speechSynthesis.cancel();
 
-    const speech =
-      new SpeechSynthesisUtterance(
-        text
-      );
+    const speech = new SpeechSynthesisUtterance(words);
 
     speech.lang =
-      selectedLanguage.speech;
+      language === "hi"
+        ? "hi-IN"
+        : language === "ta"
+        ? "ta-IN"
+        : language === "te"
+        ? "te-IN"
+        : language === "bn"
+        ? "bn-IN"
+        : language === "mr"
+        ? "mr-IN"
+        : language === "ml"
+        ? "ml-IN"
+        : language === "gu"
+        ? "gu-IN"
+        : "en-IN";
 
-    speech.rate = 0.95;
+    window.speechSynthesis.speak(speech);
+  };
 
-    window.speechSynthesis.speak(
-      speech
-    );
-  }
-
-  function startVoice() {
+  const startVoice = () => {
     const SpeechRecognition =
-      (window as any)
-        .SpeechRecognition ||
-      (window as any)
-        .webkitSpeechRecognition;
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert(
-        "Voice input is not supported."
-      );
+      alert("Voice recognition is not supported in this browser.");
       return;
     }
 
-    const recognition =
-      new SpeechRecognition();
+    const recognition = new SpeechRecognition();
 
     recognition.lang =
-      selectedLanguage.speech;
+      language === "hi"
+        ? "hi-IN"
+        : language === "ta"
+        ? "ta-IN"
+        : language === "te"
+        ? "te-IN"
+        : language === "bn"
+        ? "bn-IN"
+        : language === "mr"
+        ? "mr-IN"
+        : language === "ml"
+        ? "ml-IN"
+        : language === "gu"
+        ? "gu-IN"
+        : "en-IN";
 
-    recognition.continuous = false;
     recognition.interimResults = false;
+    recognition.continuous = false;
 
-    recognition.onstart = () => {
-      setListening(true);
-    };
+    setListening(true);
 
-    recognition.onend = () => {
+    recognition.onresult = (event: any) => {
+      const spokenText = event.results[0][0].transcript;
+      setMessage(spokenText);
       setListening(false);
     };
 
@@ -335,474 +238,141 @@ export default function WeatherPage() {
       setListening(false);
     };
 
-    recognition.onresult = (
-      event: any
-    ) => {
-      const text =
-        event.results[0][0].transcript;
-
-      setChatMessage(text);
+    recognition.onend = () => {
+      setListening(false);
     };
 
     recognition.start();
-  }
+  };
 
-  if (loading) {
-    return (
-      <main className="weatherPage">
-        <div className="loadingScreen">
-          <div className="loadingIcon">
-            🌦️
-          </div>
+  const sendMessage = () => {
+    if (!message.trim()) return;
 
-          <h1>
-            Loading weather...
-          </h1>
+    const userMessage = message.trim();
 
-          <p>
-            Getting the latest information
-            for your location.
-          </p>
-        </div>
-      </main>
-    );
-  }
+    setChatMessages((old) => [...old, `You: ${userMessage}`]);
 
-  if (error) {
-    return (
-      <main className="weatherPage">
-        <div className="errorScreen">
-          <h1>⚠️ WeatherGPT</h1>
+    setMessage("");
 
-          <p>{error}</p>
+    const reply = t.welcome;
 
-          <button
-            onClick={loadWeather}
-          >
-            Try again
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  const current =
-    weather.current;
+    setTimeout(() => {
+      setChatMessages((old) => [...old, `WeatherGPT: ${reply}`]);
+      speak(reply);
+    }, 500);
+  };
 
   return (
-    <main
-      className={
-        hasAlert
-          ? "weatherPage alertMode"
-          : "weatherPage"
-      }
-    >
-      <div className="weatherOverlay" />
+    <main className="weather-page">
+      <div className="weather-overlay" />
 
-      <div className="weatherContent">
-        <header className="weatherHeader">
-          <div>
-            <span className="miniLogo">
-              🌤️
-            </span>
+      <header className="weather-header">
+        <div className="weather-logo">🌤️</div>
 
-            <strong>
-              WeatherGPT
-            </strong>
+        <div>
+          <h1>{t.title}</h1>
+          <p>{languages[language].native}</p>
+        </div>
+      </header>
+
+      <section className="weather-panel">
+        <h2>{t.title}</h2>
+
+        <div className="search-row">
+          <input
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder={t.search}
+          />
+
+          <button>
+            🔍 {t.searchButton}
+          </button>
+        </div>
+
+        <button className="location-button">
+          📍 {t.location}
+        </button>
+
+        <div className="weather-card">
+          <div className="weather-icon">☁️</div>
+
+          <div className="temperature">
+            24°C
           </div>
 
-          <div className="headerLocation">
-            📍{" "}
-            {weather.location.name}
-            {weather.location.country
-              ? `, ${weather.location.country}`
-              : ""}
+          <div className="weather-info">
+            <p>🌡️ {t.temperature}: 24°C</p>
+            <p>💧 {t.humidity}: 78%</p>
+            <p>💨 {t.wind}: 15 km/h</p>
           </div>
-        </header>
+        </div>
 
-        {hasAlert && (
-          <section className="alertBanner">
-            <div className="alertIcon">
-              ⚠️
-            </div>
+        <div className="forecast-card">
+          <h2>{t.forecast}</h2>
 
-            <div>
-              <strong>
-                Weather Alert
-              </strong>
-
-              <p>
-                {weather.alerts[0]
-                  .headline ||
-                  weather.alerts[0]
-                    .event}
-              </p>
-
-              <small>
-                Follow official local
-                emergency instructions.
-              </small>
-            </div>
-          </section>
-        )}
-
-        <section className="currentWeather">
-          <div className="currentMain">
-            <img
-              src={
-                current.icon
-                  ? `https:${current.icon}`
-                  : ""
-              }
-              alt={
-                current.condition
-              }
-            />
-
-            <div>
-              <h1>
-                {Math.round(
-                  current.temperature
-                )}
-                °
-              </h1>
-
-              <h2>
-                {current.condition}
-              </h2>
-
-              <p>
-                Feels like{" "}
-                {Math.round(
-                  current.feels_like
-                )}
-                °
-              </p>
-            </div>
+          <div className="forecast">
+            <div>MON<br />☁️<br />26°</div>
+            <div>TUE<br />🌧️<br />27°</div>
+            <div>WED<br />☀️<br />28°</div>
+            <div>THU<br />🌦️<br />27°</div>
+            <div>FRI<br />⛈️<br />26°</div>
           </div>
-
-          <div className="weatherStats">
-            <div>
-              💧
-              <strong>
-                {current.humidity}%
-              </strong>
-              <span>
-                Humidity
-              </span>
-            </div>
-
-            <div>
-              💨
-              <strong>
-                {current.wind} km/h
-              </strong>
-              <span>
-                Wind
-              </span>
-            </div>
-
-            <div>
-              👁️
-              <strong>
-                {current.visibility} km
-              </strong>
-              <span>
-                Visibility
-              </span>
-            </div>
-
-            <div>
-              ☀️
-              <strong>
-                {current.uv}
-              </strong>
-              <span>
-                UV
-              </span>
-            </div>
-          </div>
-        </section>
-
-        <section className="forecastSection">
-          <h2>
-            5-Day Forecast
-          </h2>
-
-          <div className="forecastGrid">
-            {weather.forecast.map(
-              (day: any) => (
-                <div
-                  className="forecastCard"
-                  key={day.date}
-                >
-                  <strong>
-                    {new Date(
-                      day.date
-                    ).toLocaleDateString(
-                      undefined,
-                      {
-                        weekday:
-                          "short",
-                      }
-                    )}
-                  </strong>
-
-                  <img
-                    src={`https:${day.day.condition.icon}`}
-                    alt=""
-                  />
-
-                  <div>
-                    <b>
-                      {Math.round(
-                        day.day.maxtemp_c
-                      )}
-                      °
-                    </b>
-
-                    <span>
-                      {" "}
-                      /{" "}
-                      {Math.round(
-                        day.day.mintemp_c
-                      )}
-                      °
-                    </span>
-                  </div>
-
-                  <small>
-                    {day.day.condition.text}
-                  </small>
-                </div>
-              )
-            )}
-          </div>
-        </section>
-
-        {hasAlert && (
-          <section className="safetySection">
-            <div className="sectionTitle">
-              <div>
-                <span>🚨</span>
-
-                <div>
-                  <h2>
-                    Safety Information
-                  </h2>
-
-                  <p>
-                    Nearby places you may
-                    use during an alert.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="alertDetails">
-              {weather.alerts.map(
-                (alert: any, index: number) => (
-                  <div
-                    className="alertCard"
-                    key={index}
-                  >
-                    <h3>
-                      {alert.event ||
-                        "Weather Warning"}
-                    </h3>
-
-                    <p>
-                      {alert.description}
-                    </p>
-
-                    {alert.instruction && (
-                      <strong>
-                        🛡️{" "}
-                        {alert.instruction}
-                      </strong>
-                    )}
-                  </div>
-                )
-              )}
-            </div>
-
-            <h3 className="safeTitle">
-              🏠 Nearby safer locations
-            </h3>
-
-            {safeLoading && (
-              <div className="safeLoading">
-                Finding nearby places...
-              </div>
-            )}
-
-            <div className="safePlaces">
-              {safePlaces.map(
-                (place, index) => (
-                  <div
-                    className="safePlace"
-                    key={`${place.name}-${index}`}
-                  >
-                    <div className="safePlaceIcon">
-                      {place.type ===
-                      "Hospital"
-                        ? "🏥"
-                        : place.type ===
-                            "Police Station"
-                          ? "👮"
-                          : place.type ===
-                              "Fire Station"
-                            ? "🚒"
-                            : "🏠"}
-                    </div>
-
-                    <div className="safePlaceInfo">
-                      <h3>
-                        {place.name}
-                      </h3>
-
-                      <p>
-                        {place.type}
-                      </p>
-
-                      {place.walking_minutes !==
-                        null && (
-                        <strong>
-                          🚶 About{" "}
-                          {
-                            place.walking_minutes
-                          } min walk
-                        </strong>
-                      )}
-                    </div>
-                  </div>
-                )
-              )}
-            </div>
-
-            <p className="safetyDisclaimer">
-              Travel times are estimates and
-              may change with traffic,
-              road closures, weather, or
-              emergency conditions. Follow
-              official emergency instructions.
-            </p>
-          </section>
-        )}
-
-        <footer>
-          Weather data powered by
-          WeatherAPI.com
-        </footer>
-      </div>
-
-      {/* CHATBOT */}
+        </div>
+      </section>
 
       <button
-        className="chatBubble"
-        onClick={() =>
-          setChatOpen(!chatOpen)
-        }
+        className="chat-button"
+        onClick={() => setChatOpen(!chatOpen)}
       >
-        {chatOpen ? "×" : "🤖"}
+        🤖
       </button>
 
       {chatOpen && (
-        <div className="chatWindow">
-          <div className="chatHeader">
-            <div>
-              <strong>
-                WeatherGPT AI
-              </strong>
-
-              <span>
-                {selectedLanguage.name}
-              </span>
-            </div>
-
-            <button
-              onClick={() =>
-                setChatOpen(false)
-              }
-            >
-              ×
-            </button>
+        <section className="chat-box">
+          <div className="chat-header">
+            🤖 {t.chatbot}
           </div>
 
-          <div className="chatMessages">
-            <div className="botMessage">
-              👋 Ask me about this weather,
-              alerts or safety.
-            </div>
-
-            {chatMessage && (
-              <div className="userMessage">
-                {chatMessage}
+          <div className="chat-messages">
+            {chatMessages.length === 0 ? (
+              <div className="bot-message">
+                {t.welcome}
               </div>
-            )}
-
-            {chatLoading && (
-              <div className="botMessage">
-                Thinking...
-              </div>
-            )}
-
-            {chatReply && (
-              <div className="botMessage">
-                {chatReply}
-
-                <button
-                  className="speakButton"
-                  onClick={() =>
-                    speak(chatReply)
-                  }
-                >
-                  🔊
-                </button>
-              </div>
+            ) : (
+              chatMessages.map((msg, index) => (
+                <div key={index} className="message">
+                  {msg}
+                </div>
+              ))
             )}
           </div>
 
-          <div className="chatInput">
-            <button
-              className={
-                listening
-                  ? "voiceButton listening"
-                  : "voiceButton"
-              }
-              onClick={
-                startVoice
-              }
-            >
+          {listening && (
+            <div className="listening">
+              🎤 {t.listening}
+            </div>
+          )}
+
+          <div className="chat-input">
+            <input
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") sendMessage();
+              }}
+              placeholder={t.ask}
+            />
+
+            <button onClick={startVoice}>
               🎤
             </button>
 
-            <input
-              value={chatMessage}
-              onChange={(event) =>
-                setChatMessage(
-                  event.target.value
-                )
-              }
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  sendChat();
-                }
-              }}
-              placeholder="Ask something..."
-            />
-
-            <button
-              className="sendButton"
-              onClick={sendChat}
-              disabled={
-                chatLoading
-              }
-            >
+            <button onClick={sendMessage}>
               ➤
             </button>
           </div>
-        </div>
+        </section>
       )}
     </main>
   );
