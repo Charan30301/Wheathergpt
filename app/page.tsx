@@ -33,12 +33,12 @@ const translations: Record<
 > = {
   en: {
     title: "WeatherGPT",
-    subtitle: "Your intelligent weather companion",
+    subtitle: "Your intelligent weather assistant",
     choose: "Choose your language",
     description:
-      "Select your preferred language. WeatherGPT will remember your choice for future visits.",
+      "Get weather forecasts, warnings and weather information in your preferred language.",
     continue: "Continue",
-    saved: "Your language preference will be saved.",
+    saved: "Your language will be remembered.",
   },
 
   hi: {
@@ -46,9 +46,9 @@ const translations: Record<
     subtitle: "आपका बुद्धिमान मौसम सहायक",
     choose: "अपनी भाषा चुनें",
     description:
-      "अपनी पसंदीदा भाषा चुनें। WeatherGPT आपकी पसंद को भविष्य के लिए याद रखेगा।",
+      "अपनी पसंदीदा भाषा में मौसम का पूर्वानुमान और चेतावनियां प्राप्त करें।",
     continue: "जारी रखें",
-    saved: "आपकी भाषा की पसंद सहेजी जाएगी।",
+    saved: "आपकी भाषा याद रखी जाएगी।",
   },
 
   te: {
@@ -56,9 +56,9 @@ const translations: Record<
     subtitle: "మీ తెలివైన వాతావరణ సహాయకుడు",
     choose: "మీ భాషను ఎంచుకోండి",
     description:
-      "మీకు ఇష్టమైన భాషను ఎంచుకోండి. WeatherGPT మీ ఎంపికను భవిష్యత్తు కోసం గుర్తుంచుకుంటుంది.",
+      "మీకు ఇష్టమైన భాషలో వాతావరణ సూచనలు మరియు హెచ్చరికలను పొందండి.",
     continue: "కొనసాగించండి",
-    saved: "మీ భాష ఎంపిక సేవ్ చేయబడుతుంది.",
+    saved: "మీ భాష సేవ్ చేయబడుతుంది.",
   },
 
   ta: {
@@ -66,9 +66,9 @@ const translations: Record<
     subtitle: "உங்கள் புத்திசாலியான வானிலை உதவியாளர்",
     choose: "உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்",
     description:
-      "உங்களுக்கு விருப்பமான மொழியைத் தேர்ந்தெடுக்கவும். WeatherGPT உங்கள் தேர்வை நினைவில் வைத்திருக்கும்.",
+      "உங்களுக்கு விருப்பமான மொழியில் வானிலை முன்னறிவிப்புகள் மற்றும் எச்சரிக்கைகளைப் பெறுங்கள்.",
     continue: "தொடரவும்",
-    saved: "உங்கள் மொழித் தேர்வு சேமிக்கப்படும்.",
+    saved: "உங்கள் மொழி நினைவில் வைக்கப்படும்.",
   },
 
   bn: {
@@ -76,9 +76,9 @@ const translations: Record<
     subtitle: "আপনার বুদ্ধিমান আবহাওয়া সহকারী",
     choose: "আপনার ভাষা নির্বাচন করুন",
     description:
-      "আপনার পছন্দের ভাষা নির্বাচন করুন। WeatherGPT ভবিষ্যতের জন্য আপনার পছন্দ মনে রাখবে।",
+      "আপনার পছন্দের ভাষায় আবহাওয়ার পূর্বাভাস এবং সতর্কতা পান।",
     continue: "চালিয়ে যান",
-    saved: "আপনার ভাষার পছন্দ সংরক্ষণ করা হবে।",
+    saved: "আপনার ভাষা সংরক্ষণ করা হবে।",
   },
 
   mr: {
@@ -86,9 +86,9 @@ const translations: Record<
     subtitle: "तुमचा बुद्धिमान हवामान सहाय्यक",
     choose: "तुमची भाषा निवडा",
     description:
-      "तुमची आवडती भाषा निवडा. WeatherGPT तुमची निवड भविष्यासाठी लक्षात ठेवेल.",
+      "तुमच्या आवडत्या भाषेत हवामानाचा अंदाज आणि सूचना मिळवा.",
     continue: "पुढे जा",
-    saved: "तुमची भाषा निवड जतन केली जाईल.",
+    saved: "तुमची भाषा लक्षात ठेवली जाईल.",
   },
 
   ml: {
@@ -96,9 +96,9 @@ const translations: Record<
     subtitle: "നിങ്ങളുടെ ബുദ്ധിമാനായ കാലാവസ്ഥാ സഹായി",
     choose: "നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക",
     description:
-      "നിങ്ങളുടെ ഇഷ്ട ഭാഷ തിരഞ്ഞെടുക്കുക. WeatherGPT നിങ്ങളുടെ തിരഞ്ഞെടുപ്പ് ഓർമ്മയിൽ സൂക്ഷിക്കും.",
+      "നിങ്ങളുടെ ഇഷ്ടഭാഷയിൽ കാലാവസ്ഥാ പ്രവചനങ്ങളും മുന്നറിയിപ്പുകളും നേടുക.",
     continue: "തുടരുക",
-    saved: "നിങ്ങളുടെ ഭാഷാ തിരഞ്ഞെടുപ്പ് സംരക്ഷിക്കും.",
+    saved: "നിങ്ങളുടെ ഭാഷ ഓർമ്മിക്കപ്പെടും.",
   },
 
   gu: {
@@ -106,9 +106,9 @@ const translations: Record<
     subtitle: "તમારો બુદ્ધિશાળી હવામાન સહાયક",
     choose: "તમારી ભાષા પસંદ કરો",
     description:
-      "તમારી પસંદગીની ભાષા પસંદ કરો. WeatherGPT તમારી પસંદગી ભવિષ્ય માટે યાદ રાખશે.",
+      "તમારી પસંદગીની ભાષામાં હવામાનની આગાહી અને ચેતવણીઓ મેળવો.",
     continue: "ચાલુ રાખો",
-    saved: "તમારી ભાષાની પસંદગી સાચવવામાં આવશે.",
+    saved: "તમારી ભાષા યાદ રાખવામાં આવશે.",
   },
 };
 
@@ -116,12 +116,13 @@ export default function HomePage() {
   const router = useRouter();
 
   const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem("weatherGPTLanguage");
+    const saved = localStorage.getItem("weatherGPTLanguage");
 
-    if (savedLanguage && languages.some((l) => l.code === savedLanguage)) {
-      setSelectedLanguage(savedLanguage);
+    if (saved && languages.some((language) => language.code === saved)) {
+      setSelectedLanguage(saved);
     }
   }, []);
 
@@ -132,12 +133,13 @@ export default function HomePage() {
   };
 
   const continueToWeather = () => {
-    localStorage.setItem(
-      "weatherGPTLanguage",
-      selectedLanguage
-    );
+    localStorage.setItem("weatherGPTLanguage", selectedLanguage);
 
-    router.push("/weather");
+    setLoading(true);
+
+    setTimeout(() => {
+      router.push("/weather");
+    }, 800);
   };
 
   return (
@@ -145,13 +147,13 @@ export default function HomePage() {
       <div className="overlay" />
 
       <div className="language-card">
-        <div className="logo weather-glow">🌤️</div>
+        <div className="logo">🌦️</div>
 
         <h1>{t.title}</h1>
 
         <p className="subtitle">{t.subtitle}</p>
 
-        <section className="language-box">
+        <div className="language-box">
           <h2>{t.choose}</h2>
 
           <p className="description">{t.description}</p>
@@ -161,36 +163,31 @@ export default function HomePage() {
               <button
                 key={language.code}
                 className={`language-button ${
-                  selectedLanguage === language.code
-                    ? "selected"
-                    : ""
+                  selectedLanguage === language.code ? "selected" : ""
                 }`}
-                onClick={() =>
-                  selectLanguage(language.code)
-                }
+                onClick={() => selectLanguage(language.code)}
               >
                 <span>{language.native}</span>
 
                 <small>{language.name}</small>
 
                 <span className="arrow">
-                  {selectedLanguage === language.code
-                    ? "✓"
-                    : "→"}
+                  {selectedLanguage === language.code ? "✓" : "→"}
                 </span>
               </button>
             ))}
           </div>
 
           <button
-            className="continue-button"
+            className="language-continue"
             onClick={continueToWeather}
+            disabled={loading}
           >
-            {t.continue} →
+            {loading ? "🌎 Loading WeatherGPT..." : `🚀 ${t.continue}`}
           </button>
 
           <p className="bottom-text">{t.saved}</p>
-        </section>
+        </div>
       </div>
     </main>
   );
