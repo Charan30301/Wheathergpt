@@ -16,24 +16,34 @@ const languages = [
 
 export default function Home() {
   const router = useRouter();
+
   const [selected, setSelected] = useState("");
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const chooseLanguage = (code: string) => {
     setSelected(code);
 
-    // Remember selected language
     localStorage.setItem("weatherGPTLanguage", code);
 
-    // Go to weather page
-    router.push("/weather");
+    setIsTransitioning(true);
+
+    setTimeout(() => {
+      router.push("/weather");
+    }, 900);
   };
 
   return (
     <main className="language-page">
       <div className="overlay" />
 
-      <section className="language-card">
-        <div className="logo">🌤️</div>
+      <section
+        className={`language-card ${
+          isTransitioning ? "page-exit" : "page-enter"
+        }`}
+      >
+        <div className="logo weather-float weather-glow">
+          🌤️
+        </div>
 
         <h1>WeatherGPT</h1>
 
@@ -56,9 +66,12 @@ export default function Home() {
                   selected === language.code ? "selected" : ""
                 }`}
                 onClick={() => chooseLanguage(language.code)}
+                disabled={isTransitioning}
               >
                 <span>{language.native}</span>
+
                 <small>{language.name}</small>
+
                 <span className="arrow">→</span>
               </button>
             ))}
@@ -70,6 +83,25 @@ export default function Home() {
           will use your selected language.
         </p>
       </section>
+
+      {isTransitioning && (
+        <div className="weather-transition">
+          <div className="transition-glow"></div>
+<div className="transition-orbit orbit-one"></div>
+    <div className="transition-orbit orbit-two"></div>
+          <div className="transition-content">
+            <div className="transition-icon">🌍</div>
+
+            <h2>WeatherGPT</h2>
+
+            <p>Preparing your weather...</p>
+
+            <div className="loading-line">
+              <span></span>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

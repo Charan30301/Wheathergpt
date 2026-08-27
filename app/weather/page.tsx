@@ -276,9 +276,13 @@ export default function WeatherPage() {
       </header>
 
       <section className="weather-panel">
-        <h2>{t.title}</h2>
+      <h2>{t.title}</h2>
 
-        <div className="search-row">
+      <p className="search-question">
+       Where do you want the weather?
+      </p>
+
+          <div className="search-row">
           <input
             value={city}
             onChange={(e) => setCity(e.target.value)}
@@ -322,11 +326,11 @@ export default function WeatherPage() {
       </section>
 
       <button
-        className="chat-button"
-        onClick={() => setChatOpen(!chatOpen)}
-      >
-        🤖
-      </button>
+  className="chat-button"
+  onClick={() => setChatOpen(!chatOpen)}
+>
+  🤖
+</button>
 
       {chatOpen && (
         <section className="chat-box">
