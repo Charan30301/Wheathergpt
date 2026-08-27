@@ -1,271 +1,48 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-type WeatherEvent =
-  | "normal"
-  | "rain"
-  | "heavy-rain"
-  | "storm"
-  | "tsunami"
-  | "cyclone";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type WeatherData = {
-  city: string;
   temperature: number;
   humidity: number;
   wind: number;
-  condition: string;
-  icon: string;
-  event: WeatherEvent;
+  precipitation: number;
+  weatherCode: number;
+  isDay: number;
+};
+
+type ForecastDay = {
+  date: string;
+  temperatureMax: number;
+  temperatureMin: number;
+  weatherCode: number;
+  precipitation: number;
+};
+
+type WeatherEvent = {
+  date: string;
+  type: "storm" | "rain" | "tsunami" | "cyclone" | "earthquake" | "clear";
+  title: string;
+  description: string;
 };
 
 type Message = {
-  sender: "user" | "assistant";
+  role: "user" | "assistant";
   text: string;
 };
 
-const translations: Record<string, Record<string, string>> = {
-  en: {
-    title: "WeatherGPT",
-    subtitle: "Your intelligent weather companion",
-    search: "Search a city",
-    searchButton: "Search",
-    location: "Use my current location",
-    temperature: "Temperature",
-    humidity: "Humidity",
-    wind: "Wind",
-    forecast: "Forecast",
-    events: "Weather Calendar",
-    assistant: "Weather Assistant",
-    ask: "Ask anything about the weather...",
-    welcome:
-      "Hello! I'm WeatherGPT. Ask me anything about the weather.",
-    listening: "Listening...",
-    locationDenied:
-      "Location permission was not granted.",
-    locationSuccess: "Location detected successfully.",
-    currentWeather: "Current Weather",
-    today: "Today",
-    send: "Send",
-  },
-
-  hi: {
-    title: "WeatherGPT",
-    subtitle: "आपका बुद्धिमान मौसम सहायक",
-    search: "शहर खोजें",
-    searchButton: "खोजें",
-    location: "मेरी वर्तमान स्थिति का उपयोग करें",
-    temperature: "तापमान",
-    humidity: "नमी",
-    wind: "हवा",
-    forecast: "पूर्वानुमान",
-    events: "मौसम कैलेंडर",
-    assistant: "मौसम सहायक",
-    ask: "मौसम के बारे में कुछ भी पूछें...",
-    welcome:
-      "नमस्ते! मैं WeatherGPT हूँ। मौसम के बारे में कुछ भी पूछें।",
-    listening: "सुन रहा हूँ...",
-    locationDenied:
-      "स्थान की अनुमति नहीं दी गई।",
-    locationSuccess:
-      "स्थान सफलतापूर्वक पता चला।",
-    currentWeather: "वर्तमान मौसम",
-    today: "आज",
-    send: "भेजें",
-  },
-
-  te: {
-    title: "WeatherGPT",
-    subtitle: "మీ తెలివైన వాతావరణ సహాయకుడు",
-    search: "నగరాన్ని వెతకండి",
-    searchButton: "వెతకండి",
-    location: "నా ప్రస్తుత స్థానాన్ని ఉపయోగించండి",
-    temperature: "ఉష్ణోగ్రత",
-    humidity: "తేమ",
-    wind: "గాలి",
-    forecast: "వాతావరణ సూచన",
-    events: "వాతావరణ క్యాలెండర్",
-    assistant: "వాతావరణ సహాయకుడు",
-    ask: "వాతావరణం గురించి ఏదైనా అడగండి...",
-    welcome:
-      "నమస్కారం! నేను WeatherGPT. వాతావరణం గురించి ఏదైనా అడగండి.",
-    listening: "వింటోంది...",
-    locationDenied:
-      "లొకేషన్ అనుమతి ఇవ్వబడలేదు.",
-    locationSuccess:
-      "లొకేషన్ విజయవంతంగా గుర్తించబడింది.",
-    currentWeather: "ప్రస్తుత వాతావరణం",
-    today: "ఈరోజు",
-    send: "పంపండి",
-  },
-
-  ta: {
-    title: "WeatherGPT",
-    subtitle: "உங்கள் புத்திசாலியான வானிலை உதவியாளர்",
-    search: "நகரத்தைத் தேடுங்கள்",
-    searchButton: "தேடு",
-    location: "எனது தற்போதைய இருப்பிடத்தைப் பயன்படுத்தவும்",
-    temperature: "வெப்பநிலை",
-    humidity: "ஈரப்பதம்",
-    wind: "காற்று",
-    forecast: "முன்னறிவிப்பு",
-    events: "வானிலை காலண்டர்",
-    assistant: "வானிலை உதவியாளர்",
-    ask: "வானிலை பற்றி எதையும் கேளுங்கள்...",
-    welcome:
-      "வணக்கம்! நான் WeatherGPT. வானிலை பற்றி எதையும் கேளுங்கள்.",
-    listening: "கேட்கிறது...",
-    locationDenied:
-      "இருப்பிட அனுமதி வழங்கப்படவில்லை.",
-    locationSuccess:
-      "இருப்பிடம் வெற்றிகரமாக கண்டறியப்பட்டது.",
-    currentWeather: "தற்போதைய வானிலை",
-    today: "இன்று",
-    send: "அனுப்பு",
-  },
-
-  bn: {
-    title: "WeatherGPT",
-    subtitle: "আপনার বুদ্ধিমান আবহাওয়া সহকারী",
-    search: "শহর অনুসন্ধান করুন",
-    searchButton: "অনুসন্ধান",
-    location: "আমার বর্তমান অবস্থান ব্যবহার করুন",
-    temperature: "তাপমাত্রা",
-    humidity: "আর্দ্রতা",
-    wind: "বাতাস",
-    forecast: "পূর্বাভাস",
-    events: "আবহাওয়া ক্যালেন্ডার",
-    assistant: "আবহাওয়া সহকারী",
-    ask: "আবহাওয়া সম্পর্কে কিছু জিজ্ঞাসা করুন...",
-    welcome:
-      "হ্যালো! আমি WeatherGPT। আবহাওয়া সম্পর্কে কিছু জিজ্ঞাসা করুন।",
-    listening: "শুনছি...",
-    locationDenied:
-      "অবস্থানের অনুমতি দেওয়া হয়নি।",
-    locationSuccess:
-      "অবস্থান সফলভাবে শনাক্ত হয়েছে।",
-    currentWeather: "বর্তমান আবহাওয়া",
-    today: "আজ",
-    send: "পাঠান",
-  },
-
-  mr: {
-    title: "WeatherGPT",
-    subtitle: "तुमचा बुद्धिमान हवामान सहाय्यक",
-    search: "शहर शोधा",
-    searchButton: "शोधा",
-    location: "माझे वर्तमान स्थान वापरा",
-    temperature: "तापमान",
-    humidity: "आर्द्रता",
-    wind: "वारा",
-    forecast: "हवामान अंदाज",
-    events: "हवामान कॅलेंडर",
-    assistant: "हवामान सहाय्यक",
-    ask: "हवामानाबद्दल काहीही विचारा...",
-    welcome:
-      "नमस्कार! मी WeatherGPT आहे. हवामानाबद्दल काहीही विचारा.",
-    listening: "ऐकत आहे...",
-    locationDenied:
-      "स्थानाची परवानगी दिली नाही.",
-    locationSuccess:
-      "स्थान यशस्वीपणे शोधले.",
-    currentWeather: "सध्याचे हवामान",
-    today: "आज",
-    send: "पाठवा",
-  },
-
-  ml: {
-    title: "WeatherGPT",
-    subtitle: "നിങ്ങളുടെ ബുദ്ധിമാനായ കാലാവസ്ഥാ സഹായി",
-    search: "നഗരം തിരയുക",
-    searchButton: "തിരയുക",
-    location: "എന്റെ നിലവിലെ സ്ഥാനം ഉപയോഗിക്കുക",
-    temperature: "താപനില",
-    humidity: "ഈർപ്പം",
-    wind: "കാറ്റ്",
-    forecast: "കാലാവസ്ഥാ പ്രവചനം",
-    events: "കാലാവസ്ഥാ കലണ്ടർ",
-    assistant: "കാലാവസ്ഥാ സഹായി",
-    ask: "കാലാവസ്ഥയെക്കുറിച്ച് എന്തും ചോദിക്കൂ...",
-    welcome:
-      "നമസ്കാരം! ഞാൻ WeatherGPT ആണ്. കാലാവസ്ഥയെക്കുറിച്ച് എന്തും ചോദിക്കൂ.",
-    listening: "കേൾക്കുന്നു...",
-    locationDenied:
-      "ലൊക്കേഷൻ അനുമതി നൽകിയിട്ടില്ല.",
-    locationSuccess:
-      "ലൊക്കേഷൻ വിജയകരമായി കണ്ടെത്തി.",
-    currentWeather: "നിലവിലെ കാലാവസ്ഥ",
-    today: "ഇന്ന്",
-    send: "അയയ്ക്കുക",
-  },
-
-  gu: {
-    title: "WeatherGPT",
-    subtitle: "તમારો બુદ્ધિશાળી હવામાન સહાયક",
-    search: "શહેર શોધો",
-    searchButton: "શોધો",
-    location: "મારા વર્તમાન સ્થાનનો ઉપયોગ કરો",
-    temperature: "તાપમાન",
-    humidity: "ભેજ",
-    wind: "પવન",
-    forecast: "હવામાન આગાહી",
-    events: "હવામાન કેલેન્ડર",
-    assistant: "હવામાન સહાયક",
-    ask: "હવામાન વિશે કંઈપણ પૂછો...",
-    welcome:
-      "નમસ્તે! હું WeatherGPT છું. હવામાન વિશે કંઈપણ પૂછો.",
-    listening: "સાંભળી રહ્યું છે...",
-    locationDenied:
-      "સ્થાનની પરવાનગી આપવામાં આવી નથી.",
-    locationSuccess:
-      "સ્થાન સફળતાપૂર્વક શોધાયું.",
-    currentWeather: "વર્તમાન હવામાન",
-    today: "આજે",
-    send: "મોકલો",
-  },
+const languageNames: Record<string, string> = {
+  en: "English",
+  hi: "हिंदी",
+  te: "తెలుగు",
+  ta: "தமிழ்",
+  bn: "বাংলা",
+  mr: "मराठी",
+  ml: "മലയാളം",
+  gu: "ગુજરાતી",
 };
 
-const demoForecast = [
-  {
-    day: "MON",
-    icon: "☀️",
-    temp: 28,
-    event: "normal",
-  },
-  {
-    day: "TUE",
-    icon: "🌧️",
-    temp: 26,
-    event: "rain",
-  },
-  {
-    day: "WED",
-    icon: "🌧️",
-    temp: 24,
-    event: "heavy-rain",
-  },
-  {
-    day: "THU",
-    icon: "⛈️",
-    temp: 23,
-    event: "storm",
-  },
-  {
-    day: "FRI",
-    icon: "🌊",
-    temp: 25,
-    event: "tsunami",
-  },
-  {
-    day: "SAT",
-    icon: "🌀",
-    temp: 22,
-    event: "cyclone",
-  },
-];
-
-const languageSpeechCodes: Record<string, string> = {
+const speechLanguages: Record<string, string> = {
   en: "en-IN",
   hi: "hi-IN",
   te: "te-IN",
@@ -276,165 +53,616 @@ const languageSpeechCodes: Record<string, string> = {
   gu: "gu-IN",
 };
 
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    weatherAssistant: "Weather Assistant",
+    locationRequired: "Location permission required",
+    locationDescription:
+      "WeatherGPT needs your location to provide local weather forecasts and alerts.",
+    allowLocation: "Allow Location",
+    searchingLocation: "Finding your location...",
+    search: "Search city...",
+    currentLocation: "Use my current location",
+    today: "Today",
+    forecast: "Forecast",
+    events: "Weather Events",
+    ask: "Ask anything about the weather...",
+    listening: "Listening...",
+    welcome:
+      "Hello! I'm WeatherGPT. Ask me about today's weather, rain, storms, temperature or your forecast.",
+    temperature: "Temperature",
+    humidity: "Humidity",
+    wind: "Wind",
+    precipitation: "Rain",
+    clear: "Clear",
+    rain: "Rain",
+    storm: "Storm",
+    heavyRain: "Heavy Rain",
+    noEvents: "No major weather events detected.",
+    changeLanguage: "Change language",
+  },
+
+  hi: {
+    weatherAssistant: "मौसम सहायक",
+    locationRequired: "स्थान की अनुमति आवश्यक है",
+    locationDescription:
+      "WeatherGPT को स्थानीय मौसम और चेतावनियों के लिए आपके स्थान की आवश्यकता है।",
+    allowLocation: "स्थान की अनुमति दें",
+    searchingLocation: "आपका स्थान खोजा जा रहा है...",
+    search: "शहर खोजें...",
+    currentLocation: "मेरे वर्तमान स्थान का उपयोग करें",
+    today: "आज",
+    forecast: "पूर्वानुमान",
+    events: "मौसम की घटनाएं",
+    ask: "मौसम के बारे में कुछ भी पूछें...",
+    listening: "सुन रहा हूँ...",
+    welcome:
+      "नमस्ते! मैं WeatherGPT हूँ। आज के मौसम, बारिश, तूफान और तापमान के बारे में पूछें।",
+    temperature: "तापमान",
+    humidity: "नमी",
+    wind: "हवा",
+    precipitation: "बारिश",
+    clear: "साफ",
+    rain: "बारिश",
+    storm: "तूफान",
+    heavyRain: "भारी बारिश",
+    noEvents: "कोई बड़ी मौसम घटना नहीं मिली।",
+    changeLanguage: "भाषा बदलें",
+  },
+
+  te: {
+    weatherAssistant: "వాతావరణ సహాయకుడు",
+    locationRequired: "లొకేషన్ అనుమతి అవసరం",
+    locationDescription:
+      "స్థానిక వాతావరణ సమాచారం మరియు హెచ్చరికల కోసం WeatherGPT కి మీ లొకేషన్ అవసరం.",
+    allowLocation: "లొకేషన్ అనుమతించండి",
+    searchingLocation: "మీ లొకేషన్ కనుగొంటోంది...",
+    search: "నగరాన్ని వెతకండి...",
+    currentLocation: "నా ప్రస్తుత లొకేషన్ ఉపయోగించండి",
+    today: "ఈ రోజు",
+    forecast: "వాతావరణ సూచన",
+    events: "వాతావరణ సంఘటనలు",
+    ask: "వాతావరణం గురించి ఏదైనా అడగండి...",
+    listening: "వింటోంది...",
+    welcome:
+      "నమస్కారం! నేను WeatherGPT. ఈ రోజు వాతావరణం, వర్షం, తుఫాను మరియు ఉష్ణోగ్రత గురించి అడగండి.",
+    temperature: "ఉష్ణోగ్రత",
+    humidity: "తేమ",
+    wind: "గాలి",
+    precipitation: "వర్షం",
+    clear: "స్పష్టంగా",
+    rain: "వర్షం",
+    storm: "తుఫాను",
+    heavyRain: "భారీ వర్షం",
+    noEvents: "ప్రధాన వాతావరణ సంఘటనలు లేవు.",
+    changeLanguage: "భాష మార్చండి",
+  },
+
+  ta: {
+    weatherAssistant: "வானிலை உதவியாளர்",
+    locationRequired: "இருப்பிட அனுமதி தேவை",
+    locationDescription:
+      "உள்ளூர் வானிலை தகவல்களுக்கு WeatherGPT உங்கள் இருப்பிடத்தைப் பயன்படுத்தும்.",
+    allowLocation: "இருப்பிடத்தை அனுமதிக்கவும்",
+    searchingLocation: "உங்கள் இருப்பிடம் தேடப்படுகிறது...",
+    search: "நகரத்தைத் தேடுங்கள்...",
+    currentLocation: "எனது தற்போதைய இருப்பிடத்தைப் பயன்படுத்தவும்",
+    today: "இன்று",
+    forecast: "முன்னறிவிப்பு",
+    events: "வானிலை நிகழ்வுகள்",
+    ask: "வானிலை பற்றி ஏதாவது கேளுங்கள்...",
+    listening: "கேட்கிறது...",
+    welcome:
+      "வணக்கம்! நான் WeatherGPT. இன்று வானிலை, மழை மற்றும் வெப்பநிலை பற்றி கேளுங்கள்.",
+    temperature: "வெப்பநிலை",
+    humidity: "ஈரப்பதம்",
+    wind: "காற்று",
+    precipitation: "மழை",
+    clear: "தெளிவு",
+    rain: "மழை",
+    storm: "புயல்",
+    heavyRain: "கனமழை",
+    noEvents: "முக்கிய வானிலை நிகழ்வுகள் இல்லை.",
+    changeLanguage: "மொழியை மாற்றவும்",
+  },
+
+  bn: {
+    weatherAssistant: "আবহাওয়া সহকারী",
+    locationRequired: "অবস্থানের অনুমতি প্রয়োজন",
+    locationDescription:
+      "স্থানীয় আবহাওয়ার তথ্যের জন্য WeatherGPT আপনার অবস্থান ব্যবহার করবে।",
+    allowLocation: "অবস্থানের অনুমতি দিন",
+    searchingLocation: "আপনার অবস্থান খোঁজা হচ্ছে...",
+    search: "শহর অনুসন্ধান করুন...",
+    currentLocation: "আমার বর্তমান অবস্থান ব্যবহার করুন",
+    today: "আজ",
+    forecast: "পূর্বাভাস",
+    events: "আবহাওয়ার ঘটনা",
+    ask: "আবহাওয়া সম্পর্কে কিছু জিজ্ঞাসা করুন...",
+    listening: "শুনছি...",
+    welcome:
+      "হ্যালো! আমি WeatherGPT। আজকের আবহাওয়া, বৃষ্টি এবং তাপমাত্রা সম্পর্কে জিজ্ঞাসা করুন।",
+    temperature: "তাপমাত্রা",
+    humidity: "আর্দ্রতা",
+    wind: "বাতাস",
+    precipitation: "বৃষ্টি",
+    clear: "পরিষ্কার",
+    rain: "বৃষ্টি",
+    storm: "ঝড়",
+    heavyRain: "ভারী বৃষ্টি",
+    noEvents: "কোনো বড় আবহাওয়ার ঘটনা নেই।",
+    changeLanguage: "ভাষা পরিবর্তন করুন",
+  },
+
+  mr: {
+    weatherAssistant: "हवामान सहाय्यक",
+    locationRequired: "स्थानाची परवानगी आवश्यक आहे",
+    locationDescription:
+      "स्थानिक हवामानासाठी WeatherGPT ला तुमचे स्थान आवश्यक आहे.",
+    allowLocation: "स्थानाची परवानगी द्या",
+    searchingLocation: "तुमचे स्थान शोधत आहे...",
+    search: "शहर शोधा...",
+    currentLocation: "माझे वर्तमान स्थान वापरा",
+    today: "आज",
+    forecast: "हवामान अंदाज",
+    events: "हवामान घटना",
+    ask: "हवामानाबद्दल काहीही विचारा...",
+    listening: "ऐकत आहे...",
+    welcome:
+      "नमस्कार! मी WeatherGPT आहे. आजचे हवामान, पाऊस आणि तापमानाबद्दल विचारा.",
+    temperature: "तापमान",
+    humidity: "आर्द्रता",
+    wind: "वारा",
+    precipitation: "पाऊस",
+    clear: "स्वच्छ",
+    rain: "पाऊस",
+    storm: "वादळ",
+    heavyRain: "मुसळधार पाऊस",
+    noEvents: "कोणत्याही मोठ्या हवामान घटना नाहीत.",
+    changeLanguage: "भाषा बदला",
+  },
+
+  ml: {
+    weatherAssistant: "കാലാവസ്ഥാ സഹായി",
+    locationRequired: "ലൊക്കേഷൻ അനുമതി ആവശ്യമാണ്",
+    locationDescription:
+      "പ്രാദേശിക കാലാവസ്ഥ അറിയാൻ WeatherGPT നിങ്ങളുടെ ലൊക്കേഷൻ ഉപയോഗിക്കും.",
+    allowLocation: "ലൊക്കേഷൻ അനുവദിക്കുക",
+    searchingLocation: "നിങ്ങളുടെ ലൊക്കേഷൻ കണ്ടെത്തുന്നു...",
+    search: "നഗരം തിരയുക...",
+    currentLocation: "എന്റെ നിലവിലെ ലൊക്കേഷൻ ഉപയോഗിക്കുക",
+    today: "ഇന്ന്",
+    forecast: "കാലാവസ്ഥാ പ്രവചനം",
+    events: "കാലാവസ്ഥാ സംഭവങ്ങൾ",
+    ask: "കാലാവസ്ഥയെക്കുറിച്ച് എന്തും ചോദിക്കൂ...",
+    listening: "കേൾക്കുന്നു...",
+    welcome:
+      "നമസ്കാരം! ഞാൻ WeatherGPT. ഇന്നത്തെ കാലാവസ്ഥ, മഴ, താപനില എന്നിവയെക്കുറിച്ച് ചോദിക്കൂ.",
+    temperature: "താപനില",
+    humidity: "ഈർപ്പം",
+    wind: "കാറ്റ്",
+    precipitation: "മഴ",
+    clear: "തെളിഞ്ഞത്",
+    rain: "മഴ",
+    storm: "കൊടുങ്കാറ്റ്",
+    heavyRain: "കനത്ത മഴ",
+    noEvents: "പ്രധാന കാലാവസ്ഥാ സംഭവങ്ങളൊന്നുമില്ല.",
+    changeLanguage: "ഭാഷ മാറ്റുക",
+  },
+
+  gu: {
+    weatherAssistant: "હવામાન સહાયક",
+    locationRequired: "સ્થાનની પરવાનગી જરૂરી છે",
+    locationDescription:
+      "સ્થાનિક હવામાન માટે WeatherGPT તમારા સ્થાનનો ઉપયોગ કરશે.",
+    allowLocation: "સ્થાનની પરવાનગી આપો",
+    searchingLocation: "તમારું સ્થાન શોધી રહ્યા છીએ...",
+    search: "શહેર શોધો...",
+    currentLocation: "મારું વર્તમાન સ્થાન વાપરો",
+    today: "આજે",
+    forecast: "હવામાન આગાહી",
+    events: "હવામાન ઘટનાઓ",
+    ask: "હવામાન વિશે કંઈપણ પૂછો...",
+    listening: "સાંભળી રહ્યું છે...",
+    welcome:
+      "નમસ્તે! હું WeatherGPT છું. આજના હવામાન, વરસાદ અને તાપમાન વિશે પૂછો.",
+    temperature: "તાપમાન",
+    humidity: "ભેજ",
+    wind: "પવન",
+    precipitation: "વરસાદ",
+    clear: "સ્વચ્છ",
+    rain: "વરસાદ",
+    storm: "તોફાન",
+    heavyRain: "ભારે વરસાદ",
+    noEvents: "કોઈ મોટી હવામાન ઘટના નથી.",
+    changeLanguage: "ભાષા બદલો",
+  },
+};
+
+function getWeatherIcon(code: number) {
+  if (code === 0) return "☀️";
+  if (code <= 3) return "⛅";
+  if (code <= 48) return "🌫️";
+  if (code <= 57) return "🌦️";
+  if (code <= 67) return "🌧️";
+  if (code <= 77) return "❄️";
+  if (code <= 82) return "🌧️";
+  if (code >= 95) return "⛈️";
+
+  return "🌤️";
+}
+
+function getWeatherDescription(code: number) {
+  if (code === 0) return "Clear sky";
+  if (code <= 3) return "Partly cloudy";
+  if (code <= 48) return "Fog";
+  if (code <= 67) return "Rain";
+  if (code <= 77) return "Snow";
+  if (code <= 82) return "Rain showers";
+  if (code >= 95) return "Thunderstorm";
+
+  return "Weather";
+}
+
+function getEventForDay(
+  forecast: ForecastDay,
+  index: number
+): WeatherEvent | null {
+  const date = forecast.date;
+
+  if (forecast.weatherCode >= 95) {
+    return {
+      date,
+      type: "storm",
+      title: "Thunderstorm",
+      description: "Thunderstorm conditions are forecast.",
+    };
+  }
+
+  if (forecast.precipitation >= 70) {
+    return {
+      date,
+      type: "rain",
+      title: "Heavy Rain",
+      description: "Heavy rainfall is possible.",
+    };
+  }
+
+  /*
+   * Demo environmental events.
+   *
+   * Replace these with a real alert/disaster API
+   * when you connect the backend.
+   */
+  if (index === 3 && forecast.precipitation > 30) {
+    return {
+      date,
+      type: "cyclone",
+      title: "Cyclone Watch",
+      description: "Cyclone-like weather event demonstration.",
+    };
+  }
+
+  if (index === 5 && forecast.precipitation > 20) {
+    return {
+      date,
+      type: "tsunami",
+      title: "Tsunami Alert",
+      description: "Tsunami event demonstration.",
+    };
+  }
+
+  if (index === 6) {
+    return {
+      date,
+      type: "earthquake",
+      title: "Earthquake Alert",
+      description: "Earthquake event demonstration.",
+    };
+  }
+
+  if (forecast.weatherCode === 0) {
+    return {
+      date,
+      type: "clear",
+      title: "Clear Sky",
+      description: "Clear sky conditions.",
+    };
+  }
+
+  return null;
+}
+
 export default function WeatherPage() {
   const [language, setLanguage] = useState("en");
 
+  const [locationAllowed, setLocationAllowed] = useState(false);
+  const [locating, setLocating] = useState(false);
+
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+
   const [city, setCity] = useState("");
+  const [locationName, setLocationName] = useState("Your location");
 
-  const [weather, setWeather] =
-    useState<WeatherData>({
-      city: "Your Location",
-      temperature: 24,
-      humidity: 78,
-      wind: 15,
-      condition: "Partly Cloudy",
-      icon: "🌤️",
-      event: "normal",
-    });
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [forecast, setForecast] = useState<ForecastDay[]>([]);
 
-  const [chatOpen, setChatOpen] = useState(false);
-
+  const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
 
   const [listening, setListening] = useState(false);
+  const [loadingWeather, setLoadingWeather] = useState(false);
 
-  const [locationMessage, setLocationMessage] =
-    useState("");
+  const [activeEvent, setActiveEvent] = useState<WeatherEvent | null>(null);
 
-  const [messages, setMessages] = useState<Message[]>(
-    []
-  );
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
 
-  const [activeEvent, setActiveEvent] =
-    useState<WeatherEvent>("normal");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const t = translations[language] || translations.en;
+
+  /*
+   * Load saved language.
+   */
   useEffect(() => {
-    const saved =
-      localStorage.getItem("weatherGPTLanguage");
+    const saved = localStorage.getItem("weatherGPTLanguage");
 
     if (saved && translations[saved]) {
       setLanguage(saved);
     }
-
-    requestLocation();
   }, []);
 
-  const t =
-    translations[language] || translations.en;
+  /*
+   * Initial assistant message.
+   */
+  useEffect(() => {
+    if (messages.length === 0) {
+      setMessages([
+        {
+          role: "assistant",
+          text: t.welcome,
+        },
+      ]);
+    }
+  }, [language]);
 
   /*
-   * LOCATION
+   * Scroll chat to bottom.
    */
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages]);
 
+  /*
+   * Find current location.
+   */
   const requestLocation = () => {
     if (!navigator.geolocation) {
-      setLocationMessage(
-        "Geolocation is not supported."
-      );
+      alert("Geolocation is not supported by this browser.");
       return;
     }
 
+    setLocating(true);
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        console.log(
-          "Latitude:",
-          position.coords.latitude
-        );
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
 
-        console.log(
-          "Longitude:",
-          position.coords.longitude
-        );
+        setLatitude(lat);
+        setLongitude(lon);
+        setLocationAllowed(true);
 
-        setLocationMessage(
-          t.locationSuccess
-        );
+        try {
+          const response = await fetch(
+            `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${lat}&longitude=${lon}&language=en&format=json`
+          );
 
-        setWeather((old) => ({
-          ...old,
-          city: "Current Location",
-        }));
+          const data = await response.json();
+
+          const place = data.results?.[0];
+
+          if (place) {
+            setLocationName(
+              place.city ||
+                place.town ||
+                place.village ||
+                place.name ||
+                "Your location"
+            );
+          }
+        } catch {
+          setLocationName("Your location");
+        }
+
+        setLocating(false);
       },
       () => {
-        setLocationMessage(
-          t.locationDenied
+        setLocating(false);
+        alert(
+          "Location permission was denied. Please enable location permission in your browser settings."
         );
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000,
+        maximumAge: 600000,
       }
     );
   };
 
   /*
-   * SEARCH
+   * Automatically ask for location after entering the page.
    */
+  useEffect(() => {
+    if (!locationAllowed) {
+      requestLocation();
+    }
+  }, []);
 
-  const searchCity = () => {
+  /*
+   * Get weather from Open-Meteo.
+   */
+  const loadWeather = async (lat: number, lon: number) => {
+    setLoadingWeather(true);
+
+    try {
+      const url =
+        "https://api.open-meteo.com/v1/forecast" +
+        `?latitude=${lat}` +
+        `&longitude=${lon}` +
+        "&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day" +
+        "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+        "&timezone=auto" +
+        "&forecast_days=7";
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error("Weather request failed");
+      }
+
+      const data = await response.json();
+
+      setWeather({
+        temperature: Math.round(data.current.temperature_2m),
+        humidity: data.current.relative_humidity_2m,
+        wind: Math.round(data.current.wind_speed_10m),
+        precipitation: data.current.precipitation,
+        weatherCode: data.current.weather_code,
+        isDay: data.current.is_day,
+      });
+
+      const days: ForecastDay[] = data.daily.time.map(
+        (date: string, index: number) => ({
+          date,
+          temperatureMax: Math.round(
+            data.daily.temperature_2m_max[index]
+          ),
+          temperatureMin: Math.round(
+            data.daily.temperature_2m_min[index]
+          ),
+          weatherCode: data.daily.weather_code[index],
+          precipitation:
+            data.daily.precipitation_probability_max[index] || 0,
+        })
+      );
+
+      setForecast(days);
+
+      setMessages((old) => {
+        if (old.length === 1) {
+          return [
+            ...old,
+            {
+              role: "assistant",
+              text: `I found your location near ${locationName}. The current temperature is ${Math.round(
+                data.current.temperature_2m
+              )}°C with ${getWeatherDescription(
+                data.current.weather_code
+              ).toLowerCase()}.`,
+            },
+          ];
+        }
+
+        return old;
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingWeather(false);
+    }
+  };
+
+  useEffect(() => {
+    if (latitude !== null && longitude !== null) {
+      loadWeather(latitude, longitude);
+    }
+  }, [latitude, longitude]);
+
+  /*
+   * Search city using Open-Meteo geocoding.
+   */
+  const searchCity = async () => {
     if (!city.trim()) return;
 
-    setWeather((old) => ({
-      ...old,
-      city: city.trim(),
-    }));
+    setLoadingWeather(true);
 
-    setCity("");
+    try {
+      const response = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+          city
+        )}&count=1&language=en&format=json`
+      );
+
+      const data = await response.json();
+
+      const result = data.results?.[0];
+
+      if (!result) {
+        alert("City not found.");
+        return;
+      }
+
+      setLatitude(result.latitude);
+      setLongitude(result.longitude);
+
+      setLocationName(
+        result.name + (result.country ? `, ${result.country}` : "")
+      );
+
+      setLocationAllowed(true);
+      setCity("");
+    } catch {
+      alert("Unable to search this city.");
+    } finally {
+      setLoadingWeather(false);
+    }
   };
 
   /*
-   * VOICE
+   * Voice output.
    */
-
   const speak = (words: string) => {
-    if (
-      typeof window === "undefined" ||
-      !window.speechSynthesis
-    ) {
-      return;
-    }
+    if (!window.speechSynthesis) return;
 
     window.speechSynthesis.cancel();
 
-    const utterance =
-      new SpeechSynthesisUtterance(words);
+    const speech = new SpeechSynthesisUtterance(words);
 
-    utterance.lang =
-      languageSpeechCodes[language] ||
-      "en-IN";
+    speech.lang = speechLanguages[language] || "en-IN";
 
-    window.speechSynthesis.speak(utterance);
+    window.speechSynthesis.speak(speech);
   };
 
+  /*
+   * Voice recognition.
+   */
   const startVoice = () => {
     const SpeechRecognition =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert(
-        "Voice recognition is not supported in this browser."
-      );
+      alert("Voice recognition is not supported in this browser.");
       return;
     }
 
-    const recognition =
-      new SpeechRecognition();
+    const recognition = new SpeechRecognition();
 
-    recognition.lang =
-      languageSpeechCodes[language] ||
-      "en-IN";
-
+    recognition.lang = speechLanguages[language] || "en-IN";
     recognition.continuous = false;
     recognition.interimResults = false;
 
     setListening(true);
 
     recognition.onresult = (event: any) => {
-      const spoken =
-        event.results[0][0].transcript;
+      const transcript = event.results[0][0].transcript;
 
-      setMessage(spoken);
+      setMessage(transcript);
       setListening(false);
     };
 
@@ -450,440 +678,860 @@ export default function WeatherPage() {
   };
 
   /*
-   * CHAT ASSISTANT
+   * Weather-aware frontend assistant.
    */
-
-  const createWeatherReply = (
-    question: string
-  ) => {
+  const generateWeatherAnswer = (question: string) => {
     const q = question.toLowerCase();
+
+    if (!weather) {
+      return "Please allow location access or search for a city first.";
+    }
 
     if (
       q.includes("temperature") ||
       q.includes("hot") ||
       q.includes("cold")
     ) {
-      return `${t.temperature}: ${weather.temperature}°C.`;
+      return `The current temperature in ${locationName} is ${weather.temperature}°C.`;
+    }
+
+    if (q.includes("rain")) {
+      if (weather.precipitation > 0 || weather.weatherCode >= 51) {
+        return `Rain is currently possible in ${locationName}. The current precipitation is ${weather.precipitation} mm.`;
+      }
+
+      return `There is currently no significant rain in ${locationName}.`;
     }
 
     if (
-      q.includes("rain") ||
-      q.includes("raining")
+      q.includes("wind") ||
+      q.includes("windy")
     ) {
-      return `The current condition is ${weather.condition}. Please check the forecast for upcoming rainfall.`;
-    }
-
-    if (q.includes("wind")) {
-      return `${t.wind}: ${weather.wind} km/h.`;
+      return `The current wind speed is approximately ${weather.wind} km/h.`;
     }
 
     if (
       q.includes("humidity") ||
       q.includes("humid")
     ) {
-      return `${t.humidity}: ${weather.humidity}%.`;
+      return `The current humidity is ${weather.humidity}%.`;
     }
 
-    return `The current weather in ${weather.city} is ${weather.temperature}°C with ${weather.condition}.`;
+    if (
+      q.includes("storm") ||
+      q.includes("thunder")
+    ) {
+      if (weather.weatherCode >= 95) {
+        return "Yes. Thunderstorm conditions are currently detected.";
+      }
+
+      return "No thunderstorm conditions are currently detected.";
+    }
+
+    if (
+      q.includes("tomorrow") &&
+      forecast.length > 1
+    ) {
+      const tomorrow = forecast[1];
+
+      return `Tomorrow's forecast is ${getWeatherDescription(
+        tomorrow.weatherCode
+      )}, with temperatures from ${tomorrow.temperatureMin}°C to ${tomorrow.temperatureMax}°C and about ${tomorrow.precipitation}% precipitation probability.`;
+    }
+
+    return `Currently in ${locationName}: ${weather.temperature}°C, ${getWeatherDescription(
+      weather.weatherCode
+    ).toLowerCase()}, humidity ${weather.humidity}%, and wind ${weather.wind} km/h.`;
   };
 
   const sendMessage = () => {
-    if (!message.trim()) return;
+    const question = message.trim();
 
-    const userText = message.trim();
+    if (!question) return;
 
     setMessages((old) => [
       ...old,
       {
-        sender: "user",
-        text: userText,
+        role: "user",
+        text: question,
       },
     ]);
 
     setMessage("");
 
-    const reply =
-      createWeatherReply(userText);
-
     setTimeout(() => {
+      const answer = generateWeatherAnswer(question);
+
       setMessages((old) => [
         ...old,
         {
-          sender: "assistant",
-          text: reply,
+          role: "assistant",
+          text: answer,
         },
       ]);
 
-      speak(reply);
-    }, 500);
+      speak(answer);
+    }, 400);
   };
 
   /*
-   * WEATHER EVENT EFFECTS
+   * Calendar events.
    */
+  const events = useMemo(() => {
+    return forecast
+      .map((day, index) => getEventForDay(day, index))
+      .filter(Boolean) as WeatherEvent[];
+  }, [forecast]);
 
-  useEffect(() => {
-    setActiveEvent(weather.event);
-  }, [weather.event]);
-
-  const triggerEvent = (
-    event: WeatherEvent
-  ) => {
+  /*
+   * Run weather effect.
+   */
+  const triggerEvent = (event: WeatherEvent) => {
     setActiveEvent(event);
+
+    if (event.type === "storm") {
+      playThunderSound();
+    }
+
+    if (event.type === "rain") {
+      playRainSound();
+    }
+
+    if (event.type === "earthquake") {
+      playEarthquakeSound();
+    }
+
+    if (event.type === "cyclone") {
+      playCycloneSound();
+    }
+
+    if (event.type === "tsunami") {
+      playTsunamiSound();
+    }
+
+    setTimeout(() => {
+      setActiveEvent(null);
+    }, 8000);
   };
 
+  /*
+   * Browser-generated sound effects.
+   */
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const getAudioContext = () => {
+    if (!audioContextRef.current) {
+      const AudioContextClass =
+        window.AudioContext ||
+        (window as any).webkitAudioContext;
+
+      audioContextRef.current = new AudioContextClass();
+    }
+
+    return audioContextRef.current;
+  };
+
+  const playTone = (
+    frequency: number,
+    duration: number,
+    type: OscillatorType = "sine",
+    volume = 0.08
+  ) => {
+    try {
+      const ctx = getAudioContext();
+
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      oscillator.type = type;
+      oscillator.frequency.value = frequency;
+
+      gain.gain.setValueAtTime(volume, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        ctx.currentTime + duration
+      );
+
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+
+      oscillator.start();
+      oscillator.stop(ctx.currentTime + duration);
+    } catch {}
+  };
+
+  const playThunderSound = () => {
+    playTone(55, 1.4, "sawtooth", 0.15);
+
+    setTimeout(() => {
+      playTone(35, 1.8, "sawtooth", 0.1);
+    }, 150);
+  };
+
+  const playRainSound = () => {
+    for (let i = 0; i < 6; i++) {
+      setTimeout(() => {
+        playTone(
+          300 + Math.random() * 600,
+          0.12,
+          "sine",
+          0.025
+        );
+      }, i * 80);
+    }
+  };
+
+  const playEarthquakeSound = () => {
+    playTone(45, 1.1, "square", 0.12);
+  };
+
+  const playCycloneSound = () => {
+    playTone(120, 2, "sine", 0.1);
+  };
+
+  const playTsunamiSound = () => {
+    playTone(80, 2, "sine", 0.12);
+  };
+
+  /*
+   * Calendar.
+   */
+  const calendarDays = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const cells: (number | null)[] = [];
+
+    for (let i = 0; i < firstDay; i++) {
+      cells.push(null);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      cells.push(day);
+    }
+
+    return cells;
+  }, [calendarMonth]);
+
+  const eventForCalendarDay = (day: number) => {
+    const date = new Date(
+      calendarMonth.getFullYear(),
+      calendarMonth.getMonth(),
+      day
+    );
+
+    const iso = date.toISOString().split("T")[0];
+
+    return events.find((event) => event.date === iso);
+  };
+
+  const eventEmoji = (type: WeatherEvent["type"]) => {
+    switch (type) {
+      case "storm":
+        return "⛈️";
+
+      case "rain":
+        return "🌧️";
+
+      case "tsunami":
+        return "🌊";
+
+      case "cyclone":
+        return "🌀";
+
+      case "earthquake":
+        return "🌎";
+
+      case "clear":
+        return "☀️";
+
+      default:
+        return "🌤️";
+    }
+  };
+
+  const previousMonth = () => {
+    setCalendarMonth(
+      new Date(
+        calendarMonth.getFullYear(),
+        calendarMonth.getMonth() - 1,
+        1
+      )
+    );
+  };
+
+  const nextMonth = () => {
+    setCalendarMonth(
+      new Date(
+        calendarMonth.getFullYear(),
+        calendarMonth.getMonth() + 1,
+        1
+      )
+    );
+  };
+
+  /*
+   * Visual event classes.
+   */
+  const eventClass = activeEvent
+    ? `event-${activeEvent.type}`
+    : "";
+
   return (
-    <main
-      className={`weather-page event-${activeEvent}`}
-    >
+    <main className={`weather-page ${eventClass}`}>
       <div className="weather-overlay" />
 
-      {/* HEAVY RAIN */}
+      {/* =====================================
+          WEATHER EFFECTS
+      ====================================== */}
 
-      {activeEvent === "heavy-rain" && (
-        <div className="rain-container">
-          {Array.from({ length: 70 }).map(
-            (_, index) => (
-              <span
-                key={index}
-                className="rain-drop"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  animationDelay: `${
-                    Math.random() * 2
-                  }s`,
-                }}
-              />
-            )
-          )}
-        </div>
-      )}
-
-      {/* THUNDER */}
-
-      {activeEvent === "storm" && (
+      {activeEvent?.type === "storm" && (
         <div className="storm-effect">
-          <div className="lightning">
-            ⚡
-          </div>
+          <div className="lightning lightning-one" />
+          <div className="lightning lightning-two" />
+          <div className="storm-clouds">⛈️</div>
         </div>
       )}
 
-      {/* TSUNAMI */}
-
-      {activeEvent === "tsunami" && (
-        <div className="tsunami-effect">
-          🌊 🌊 🌊
-        </div>
-      )}
-
-      {/* CYCLONE */}
-
-      {activeEvent === "cyclone" && (
-        <div className="cyclone-effect">
-          🌀
-        </div>
-      )}
-
-      {/* HEADER */}
-
-      <header className="weather-header page-enter">
-        <div className="weather-logo weather-glow">
-          🌤️
-        </div>
-
-        <div>
-          <h1>{t.title}</h1>
-
-          <p>{t.subtitle}</p>
-
-          <small>
-            {language.toUpperCase()}
-          </small>
-        </div>
-      </header>
-
-      {/* MAIN PANEL */}
-
-      <section className="weather-panel page-enter">
-        <div className="weather-hero">
-          <span className="hero-small">
-            {t.currentWeather}
-          </span>
-
-          <h2>{weather.city}</h2>
-
-          <div className="big-weather-icon weather-float">
-            {weather.icon}
-          </div>
-
-          <div className="temperature">
-            {weather.temperature}°
-          </div>
-
-          <div className="condition">
-            {weather.condition}
-          </div>
-        </div>
-
-        {/* SEARCH */}
-
-        <div className="search-section">
-          <p className="search-question">
-            Where do you want the weather?
-          </p>
-
-          <div className="search-row">
-            <input
-              value={city}
-              onChange={(e) =>
-                setCity(e.target.value)
-              }
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  searchCity();
-                }
+      {activeEvent?.type === "rain" && (
+        <div className="rain-effect">
+          {Array.from({ length: 70 }).map((_, index) => (
+            <span
+              key={index}
+              style={{
+                left: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 1.5}s`,
+                animationDuration: `${0.45 + Math.random() * 0.6}s`,
               }}
-              placeholder={t.search}
             />
+          ))}
+        </div>
+      )}
+
+      {activeEvent?.type === "tsunami" && (
+        <div className="tsunami-effect">
+          <div className="tsunami-wave">🌊🌊🌊</div>
+        </div>
+      )}
+
+      {activeEvent?.type === "cyclone" && (
+        <div className="cyclone-effect">
+          <div className="cyclone">
+            🌀
+          </div>
+        </div>
+      )}
+
+      {activeEvent?.type === "clear" && (
+        <div className="clear-cloud-effect">
+          <span>☁️</span>
+          <span>☁️</span>
+          <span>☁️</span>
+        </div>
+      )}
+
+      {activeEvent?.type === "earthquake" && (
+        <div className="earthquake-warning">
+          🌎 EARTHQUAKE
+        </div>
+      )}
+
+      {/* =====================================
+          LOCATION PERMISSION
+      ====================================== */}
+
+      {!locationAllowed && (
+        <div className="location-permission">
+          <div className="location-card">
+            <div className="location-big-icon">📍</div>
+
+            <h2>{t.locationRequired}</h2>
+
+            <p>{t.locationDescription}</p>
 
             <button
-              className="search-button"
-              onClick={searchCity}
+              className="allow-location-button"
+              onClick={requestLocation}
+              disabled={locating}
             >
-              🔍 {t.searchButton}
+              {locating
+                ? `📡 ${t.searchingLocation}`
+                : `📍 ${t.allowLocation}`}
             </button>
+
+            <small>
+              Your browser will ask you to allow location access.
+            </small>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================
+          MAIN CHATGPT STYLE APP
+      ====================================== */}
+
+      <div className="weather-app">
+        {/* Sidebar */}
+
+        <aside className="weather-sidebar">
+          <div className="sidebar-logo">
+            🌦️
+            <span>WeatherGPT</span>
           </div>
 
           <button
-            className="location-button"
-            onClick={requestLocation}
+            className="new-chat-button"
+            onClick={() =>
+              setMessages([
+                {
+                  role: "assistant",
+                  text: t.welcome,
+                },
+              ])
+            }
           >
-            📍 {t.location}
+            ＋ New weather chat
           </button>
 
-          {locationMessage && (
-            <p className="location-message">
-              {locationMessage}
-            </p>
-          )}
-        </div>
+          <div className="sidebar-section">
+            <span>LOCATION</span>
 
-        {/* WEATHER INFORMATION */}
-
-        <div className="weather-info">
-          <div className="info-box">
-            <span>🌡️</span>
-            <small>{t.temperature}</small>
-            <strong>
-              {weather.temperature}°C
-            </strong>
-          </div>
-
-          <div className="info-box">
-            <span>💧</span>
-            <small>{t.humidity}</small>
-            <strong>
-              {weather.humidity}%
-            </strong>
-          </div>
-
-          <div className="info-box">
-            <span>💨</span>
-            <small>{t.wind}</small>
-            <strong>
-              {weather.wind} km/h
-            </strong>
-          </div>
-        </div>
-
-        {/* FORECAST */}
-
-        <div className="forecast-card">
-          <div className="section-title">
-            <h2>{t.forecast}</h2>
-
-            <span>7 Days</span>
-          </div>
-
-          <div className="forecast">
-            {demoForecast.map(
-              (day, index) => (
-                <button
-                  key={day.day}
-                  className={`forecast-item ${
-                    activeEvent ===
-                    day.event
-                      ? "active-event"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    triggerEvent(
-                      day.event as WeatherEvent
-                    )
-                  }
-                >
-                  <strong>
-                    {index === 0
-                      ? t.today
-                      : day.day}
-                  </strong>
-
-                  <span className="forecast-icon">
-                    {day.icon}
-                  </span>
-
-                  <span>
-                    {day.temp}°
-                  </span>
-                </button>
-              )
-            )}
-          </div>
-        </div>
-
-        {/* WEATHER CALENDAR */}
-
-        <div className="calendar-section">
-          <div className="section-title">
-            <h2>📅 {t.events}</h2>
-          </div>
-
-          <div className="weather-calendar">
-            {demoForecast.map(
-              (day) => (
-                <div
-                  key={day.day}
-                  className={`calendar-event event-card-${day.event}`}
-                >
-                  <div className="calendar-date">
-                    {day.day}
-                  </div>
-
-                  <div className="calendar-icon">
-                    {day.icon}
-                  </div>
-
-                  <div className="calendar-info">
-                    <strong>
-                      {day.event ===
-                      "heavy-rain"
-                        ? "Heavy Rain"
-                        : day.event ===
-                          "storm"
-                        ? "Thunderstorm"
-                        : day.event ===
-                          "tsunami"
-                        ? "Tsunami Alert"
-                        : day.event ===
-                          "cyclone"
-                        ? "Cyclone Alert"
-                        : "Weather Event"}
-                    </strong>
-
-                    <span>
-                      {day.temp}°C
-                    </span>
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* CHAT BUTTON */}
-
-      <button
-        className="chat-button chatbot-button"
-        onClick={() =>
-          setChatOpen(!chatOpen)
-        }
-        aria-label="Open weather assistant"
-      >
-        🤖
-      </button>
-
-      {/* CHAT */}
-
-      {chatOpen && (
-        <section className="chat-box">
-          <div className="chat-header">
-            <div>
-              🤖 {t.assistant}
+            <div className="sidebar-location">
+              📍 {locationName}
             </div>
+          </div>
+
+          <div className="sidebar-section">
+            <span>QUICK WEATHER</span>
 
             <button
               onClick={() =>
-                setChatOpen(false)
+                setMessage("Will it rain today?")
               }
             >
-              ✕
+              🌧️ Will it rain today?
+            </button>
+
+            <button
+              onClick={() =>
+                setMessage("What is the temperature?")
+              }
+            >
+              🌡️ Temperature
+            </button>
+
+            <button
+              onClick={() =>
+                setMessage("Will there be a storm?")
+              }
+            >
+              ⛈️ Storm forecast
             </button>
           </div>
 
-          <div className="chat-messages">
-            {messages.length === 0 && (
-              <div className="bot-message">
-                {t.welcome}
+          <div className="sidebar-bottom">
+            <button
+              onClick={() => {
+                const newLanguage = prompt(
+                  `${t.changeLanguage}\n${Object.entries(
+                    languageNames
+                  )
+                    .map(([code, name]) => `${code}: ${name}`)
+                    .join("\n")}`
+                );
+
+                if (
+                  newLanguage &&
+                  translations[newLanguage]
+                ) {
+                  localStorage.setItem(
+                    "weatherGPTLanguage",
+                    newLanguage
+                  );
+
+                  setLanguage(newLanguage);
+                }
+              }}
+            >
+              🌐 {languageNames[language]}
+            </button>
+          </div>
+        </aside>
+
+        {/* Main area */}
+
+        <section className="chat-main">
+          {/* Header */}
+
+          <header className="chat-topbar">
+            <div>
+              <h1>🌦️ {t.weatherAssistant}</h1>
+              <p>
+                {locationName}
+                {weather
+                  ? ` • ${weather.temperature}°C`
+                  : ""}
+              </p>
+            </div>
+
+            <div className="topbar-status">
+              <span className="status-dot" />
+              Live weather
+            </div>
+          </header>
+
+          {/* Chat */}
+
+          <div className="chat-scroll">
+            <div className="chat-content">
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={`chat-message-row ${msg.role}`}
+                >
+                  <div className="message-avatar">
+                    {msg.role === "assistant"
+                      ? "🌦️"
+                      : "👤"}
+                  </div>
+
+                  <div className="chat-message">
+                    <div className="message-role">
+                      {msg.role === "assistant"
+                        ? "WeatherGPT"
+                        : "You"}
+                    </div>
+
+                    <div>{msg.text}</div>
+                  </div>
+                </div>
+              ))}
+
+              <div ref={messagesEndRef} />
+
+              {/* Current weather */}
+
+              {weather && (
+                <div className="weather-dashboard">
+                  <div className="current-weather">
+                    <div>
+                      <div className="weather-location">
+                        📍 {locationName}
+                      </div>
+
+                      <div className="big-weather-icon">
+                        {getWeatherIcon(
+                          weather.weatherCode
+                        )}
+                      </div>
+
+                      <div className="big-temperature">
+                        {weather.temperature}°
+                      </div>
+
+                      <div className="weather-condition">
+                        {getWeatherDescription(
+                          weather.weatherCode
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="weather-stats">
+                      <div>
+                        <span>🌡️</span>
+                        <small>{t.temperature}</small>
+                        <strong>
+                          {weather.temperature}°C
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>💧</span>
+                        <small>{t.humidity}</small>
+                        <strong>
+                          {weather.humidity}%
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>💨</span>
+                        <small>{t.wind}</small>
+                        <strong>
+                          {weather.wind} km/h
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>🌧️</span>
+                        <small>{t.precipitation}</small>
+                        <strong>
+                          {weather.precipitation} mm
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 7-day forecast */}
+
+                  <div className="forecast-section">
+                    <h2>{t.forecast}</h2>
+
+                    <div className="forecast-scroll">
+                      {forecast.map((day, index) => (
+                        <div
+                          className="forecast-day"
+                          key={day.date}
+                        >
+                          <span>
+                            {index === 0
+                              ? t.today
+                              : new Date(
+                                  day.date
+                                ).toLocaleDateString(
+                                  language,
+                                  {
+                                    weekday: "short",
+                                  }
+                                )}
+                          </span>
+
+                          <strong>
+                            {getWeatherIcon(
+                              day.weatherCode
+                            )}
+                          </strong>
+
+                          <b>
+                            {day.temperatureMax}°
+                          </b>
+
+                          <small>
+                            {day.temperatureMin}°
+                          </small>
+
+                          <em>
+                            💧 {day.precipitation}%
+                          </em>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Calendar */}
+
+              <section className="calendar-section">
+                <div className="section-title-row">
+                  <h2>📅 {t.events}</h2>
+
+                  <div className="calendar-controls">
+                    <button onClick={previousMonth}>
+                      ‹
+                    </button>
+
+                    <strong>
+                      {calendarMonth.toLocaleDateString(
+                        language,
+                        {
+                          month: "long",
+                          year: "numeric",
+                        }
+                      )}
+                    </strong>
+
+                    <button onClick={nextMonth}>
+                      ›
+                    </button>
+                  </div>
+                </div>
+
+                <div className="calendar">
+                  {[
+                    "Sun",
+                    "Mon",
+                    "Tue",
+                    "Wed",
+                    "Thu",
+                    "Fri",
+                    "Sat",
+                  ].map((day) => (
+                    <div
+                      key={day}
+                      className="calendar-weekday"
+                    >
+                      {day}
+                    </div>
+                  ))}
+
+                  {calendarDays.map((day, index) => {
+                    if (!day) {
+                      return (
+                        <div
+                          key={`empty-${index}`}
+                          className="calendar-empty"
+                        />
+                      );
+                    }
+
+                    const event =
+                      eventForCalendarDay(day);
+
+                    return (
+                      <button
+                        key={day}
+                        className={`calendar-day ${
+                          event
+                            ? `calendar-event-${event.type}`
+                            : ""
+                        }`}
+                        onClick={() => {
+                          if (event) {
+                            triggerEvent(event);
+                          }
+                        }}
+                      >
+                        <span>{day}</span>
+
+                        {event && (
+                          <small>
+                            {eventEmoji(event.type)}
+                          </small>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="event-list">
+                  {events.length === 0 ? (
+                    <p>{t.noEvents}</p>
+                  ) : (
+                    events.map((event) => (
+                      <button
+                        key={`${event.date}-${event.type}`}
+                        className="event-item"
+                        onClick={() =>
+                          triggerEvent(event)
+                        }
+                      >
+                        <span>
+                          {eventEmoji(event.type)}
+                        </span>
+
+                        <div>
+                          <strong>
+                            {event.title}
+                          </strong>
+
+                          <small>
+                            {event.date} —{" "}
+                            {event.description}
+                          </small>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </section>
+            </div>
+          </div>
+
+          {/* Input */}
+
+          <div className="chat-composer-area">
+            {listening && (
+              <div className="voice-listening">
+                🎤 {t.listening}
               </div>
             )}
 
-            {messages.map(
-              (msg, index) => (
-                <div
-                  key={index}
-                  className={
-                    msg.sender === "user"
-                      ? "user-message"
-                      : "bot-message"
-                  }
-                >
-                  {msg.text}
-                </div>
-              )
-            )}
-          </div>
+            <div className="chat-composer">
+              <button
+                className={`voice-button ${
+                  listening ? "recording" : ""
+                }`}
+                onClick={startVoice}
+              >
+                🎤
+              </button>
 
-          {listening && (
-            <div className="listening">
-              🎤 {t.listening}
-            </div>
-          )}
-
-          <div className="chat-input">
-            <input
-              value={message}
-              onChange={(e) =>
-                setMessage(e.target.value)
-              }
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  sendMessage();
+              <input
+                value={message}
+                onChange={(e) =>
+                  setMessage(e.target.value)
                 }
-              }}
-              placeholder={t.ask}
-            />
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    sendMessage();
+                  }
+                }}
+                placeholder={t.ask}
+              />
 
-            <button
-              onClick={startVoice}
-              className={
-                listening
-                  ? "voice-active"
-                  : ""
-              }
-            >
-              🎤
-            </button>
+              <button
+                className="send-button"
+                onClick={sendMessage}
+              >
+                ↑
+              </button>
+            </div>
 
-            <button
-              onClick={sendMessage}
-            >
-              ➤
-            </button>
+            <div className="composer-hint">
+              WeatherGPT can provide weather information,
+              forecasts and weather-event demonstrations.
+            </div>
           </div>
         </section>
+      </div>
+
+      {/* Search floating control */}
+
+      <div className="city-search">
+        <input
+          value={city}
+          onChange={(e) =>
+            setCity(e.target.value)
+          }
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              searchCity();
+            }
+          }}
+          placeholder={t.search}
+        />
+
+        <button onClick={searchCity}>
+          🔍
+        </button>
+      </div>
+
+      {/* Active event notification */}
+
+      {activeEvent && (
+        <div
+          className={`event-notification event-${activeEvent.type}`}
+        >
+          <span className="notification-icon">
+            {eventEmoji(activeEvent.type)}
+          </span>
+
+          <div>
+            <strong>{activeEvent.title}</strong>
+
+            <p>{activeEvent.description}</p>
+          </div>
+
+          <button
+            onClick={() => setActiveEvent(null)}
+          >
+            ×
+          </button>
+        </div>
       )}
     </main>
   );
-          }
+}
