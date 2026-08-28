@@ -116,7 +116,6 @@ export default function HomePage() {
   const router = useRouter();
 
   const [selectedLanguage, setSelectedLanguage] = useState("en");
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("weatherGPTLanguage");
@@ -130,17 +129,11 @@ export default function HomePage() {
 
   const selectLanguage = (code: string) => {
     setSelectedLanguage(code);
+localStorage.setItem("weatherGPTLanguage", code);
+  router.push("/weather");
   };
 
-  const continueToWeather = () => {
-    localStorage.setItem("weatherGPTLanguage", selectedLanguage);
 
-    setLoading(true);
-
-    setTimeout(() => {
-      router.push("/weather");
-    }, 800);
-  };
 
   return (
     <main className="language-page page-enter">
@@ -178,13 +171,6 @@ export default function HomePage() {
             ))}
           </div>
 
-          <button
-            className="language-continue"
-            onClick={continueToWeather}
-            disabled={loading}
-          >
-            {loading ? "🌎 Loading WeatherGPT..." : `🚀 ${t.continue}`}
-          </button>
 
           <p className="bottom-text">{t.saved}</p>
         </div>
