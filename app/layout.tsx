@@ -3,7 +3,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "WeatherGPT",
-  description: "AI Weather Assistant",
+  description:
+    "AI-powered multilingual weather assistant",
 };
 
 export default function RootLayout({
