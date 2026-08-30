@@ -1,115 +1,83 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Globe2, Languages, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-type Language = {
-  code: string;
-  name: string;
-  native: string;
-};
-
-const languages: Language[] = [
-  { code: "en", name: "English", native: "English" },
-  { code: "te", name: "Telugu", native: "తెలుగు" },
-  { code: "hi", name: "Hindi", native: "हिन्दी" },
-  { code: "ta", name: "Tamil", native: "தமிழ்" },
-  { code: "kn", name: "Kannada", native: "ಕನ್ನಡ" },
-  { code: "ml", name: "Malayalam", native: "മലയാളം" },
-  { code: "mr", name: "Marathi", native: "मराठी" },
-  { code: "bn", name: "Bengali", native: "বাংলা" },
+const languages = [
+  { code: "en", label: "English", native: "English" },
+  { code: "te", label: "Telugu", native: "తెలుగు" },
+  { code: "hi", label: "Hindi", native: "हिन्दी" },
+  { code: "ta", label: "Tamil", native: "தமிழ்" },
+  { code: "kn", label: "Kannada", native: "ಕನ್ನಡ" },
+  { code: "ml", label: "Malayalam", native: "മലയാളം" },
+  { code: "bn", label: "Bengali", native: "বাংলা" },
+  { code: "mr", label: "Marathi", native: "मराठी" },
+  { code: "es", label: "Spanish", native: "Español" },
+  { code: "fr", label: "French", native: "Français" },
+  { code: "de", label: "German", native: "Deutsch" },
+  { code: "ja", label: "Japanese", native: "日本語" }
 ];
 
-export default function HomePage() {
+export default function Home() {
   const router = useRouter();
+  const [selected, setSelected] = useState("en");
 
-  const [selectedLanguage, setSelectedLanguage] = useState("en");
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem("weathergpt-language");
-
-    if (savedLanguage) {
-      setSelectedLanguage(savedLanguage);
-    }
-  }, []);
-
-  function selectLanguage(code: string) {
-    setSelectedLanguage(code);
-  }
-
-  function continueToWeather() {
-    setLoading(true);
-
-    localStorage.setItem(
-      "weathergpt-language",
-      selectedLanguage
-    );
-
-    setTimeout(() => {
-      router.push("/weather");
-    }, 300);
-  }
+function continueToWeather() {
+  localStorage.setItem("weathergpt-language", selected);
+  router.push("/weather");
+}
 
   return (
-    <main className="language-page">
-      <div className="overlay" />
+    <main className="language-shell">
+      <div className="language-glow language-glow-one" />
+      <div className="language-glow language-glow-two" />
 
-      <div className="language-card">
-        <div className="logo">🌤️</div>
-
-        <h1>WeatherGPT</h1>
-
-        <p className="subtitle">
-          Your intelligent multilingual weather assistant
-        </p>
-
-        <div className="language-box">
-          <h2>Choose your language</h2>
-
-          <p className="description">
-            WeatherGPT will remember your language and use it
-            automatically whenever you return.
-          </p>
-
-          <div className="languages">
-            {languages.map((language) => (
-              <button
-                key={language.code}
-                className={`language-button ${
-                  selectedLanguage === language.code
-                    ? "selected"
-                    : ""
-                }`}
-                onClick={() =>
-                  selectLanguage(language.code)
-                }
-              >
-                <span>{language.name}</span>
-
-                <small>{language.native}</small>
-
-                {selectedLanguage === language.code && (
-                  <span className="arrow">✓</span>
-                )}
-              </button>
-            ))}
-          </div>
-
-          <button
-            className="language-continue"
-            onClick={continueToWeather}
-            disabled={loading}
-          >
-            {loading ? "Opening WeatherGPT..." : "Continue →"}
-          </button>
+      <section className="language-card">
+        <div className="brand-mark">
+          <Globe2 size={28} />
         </div>
 
-        <p className="bottom-text">
-          Your selected language will be used for weather,
-          chatbot and voice responses.
+        <p className="eyebrow">
+          <Sparkles size={14} />
+          AI WEATHER INTELLIGENCE
         </p>
-      </div>
+
+        <h1>
+          Weather<span>GPT</span>
+        </h1>
+
+        <p className="language-subtitle">
+          Weather, maps, forecasts and an AI assistant — in your language.
+        </p>
+
+        <div className="language-heading">
+          <Languages size={18} />
+          <span>Choose your language</span>
+        </div>
+
+        <div className="language-grid">
+          {languages.map((language) => (
+            <button
+              key={language.code}
+              onClick={() => setSelected(language.code)}
+              className={`language-option ${
+                selected === language.code ? "selected" : ""
+              }`}
+            >
+              <strong>{language.native}</strong>
+              <small>{language.label}</small>
+            </button>
+          ))}
+        </div>
+
+        <button
+          className="primary-button language-continue"
+          onClick={continueToWeather}
+        >
+          Continue to WeatherGPT
+        </button>
+      </section>
     </main>
   );
 }

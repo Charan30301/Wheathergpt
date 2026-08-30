@@ -1,0 +1,16 @@
+WeatherGPT knowledge base
+
+Weather basics:
+Open-Meteo uses WMO weather interpretation codes. Code 0 means clear sky. Codes 1-3 describe cloudiness. Codes 45 and 48 represent fog. Codes 51-57 represent drizzle. Codes 61-67 and 80-82 represent rain-related conditions. Codes 95-99 represent thunderstorms.
+
+Safety:
+Thunderstorms can produce lightning. Avoid exposed areas and follow official local warnings. Heavy rainfall can cause flooding. Tsunami information should come from official tsunami warning authorities; a normal weather forecast API is not a tsunami warning system.
+
+Farm:
+Crop recommendations should combine temperature, rainfall, soil, season, water availability, crop calendars and local agricultural guidance. WeatherGPT must not present a crop suggestion as a guaranteed yield.
+
+Travel:
+For travel, check precipitation, thunderstorms, wind, visibility, heat and official warnings. Refresh the forecast before departure.
+
+RAG:
+This starter uses keyword retrieval. For production, replace it with PostgreSQL + pgvector embeddings and a curated agricultural/disaster/weather corpus.

@@ -6,34 +6,33 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState,
+  useState
 } from "react";
 
 import {
-  Menu,
-  MapPin,
-  Search,
-  Mic,
-  Send,
-  Plus,
-  Globe2,
-  Sprout,
-  Plane,
-  CloudSun,
-  Volume2,
-  VolumeX,
-  Navigation,
-  X,
-  LocateFixed,
+  Bot,
   CalendarDays,
-  Wind,
+  Cloud,
+  CloudRain,
+  CloudLightning,
   Droplets,
-  Gauge,
-  Eye,
+  Globe2,
+  LocateFixed,
+  MapPin,
+  Mic,
+  Navigation,
+  Pause,
+  Play,
+  Plane,
+  Search,
+  Send,
+  Settings2,
+  Sprout,
   Sun,
-  Thermometer,
-  Waves,
-  AlertTriangle,
+  Volume2,
+  Wind,
+  X,
+  RefreshCw
 } from "lucide-react";
 
 const Globe = dynamic(
@@ -41,170 +40,295 @@ const Globe = dynamic(
   { ssr: false }
 );
 
-type Mode = "general" | "farmer" | "traveler";
+const LiveMap = dynamic(
+  () => import("../../components/LiveMap"),
+  { ssr: false }
+);
 
-type WeatherData = {
-  latitude: number;
-  longitude: number;
-  temperature: number;
-  feelsLike: number;
-  humidity: number;
-  windSpeed: number;
-  pressure: number;
-  visibility: number;
-  uv: number;
-  weatherCode: number;
-  rainProbability: number;
-  city: string;
-  country: string;
-};
-
-type ForecastDay = {
-  date: string;
-  temperature: number;
-  rain: number;
-  weatherCode: number;
-};
-
-type WeatherEvent = {
-  date: string;
-  type:
-    | "storm"
-    | "rain"
-    | "tsunami"
-    | "cyclone"
-    | "earthquake"
-    | "clear";
-  title: string;
-  description: string;
-};
-
-type ChatMessage = {
-  role: "user" | "assistant";
-  text: string;
-};
-
-const API_URL =
+const API =
   process.env.NEXT_PUBLIC_API_URL ||
-  "http://127.0.0.1:8000";
+  "http://localhost:8000";
 
-const languageNames: Record<string, string> = {
+type Location = {
+  name: string;
+  country?: string;
+  lat: number;
+  lon: number;
+};
+
+type Mode =
+  | "weather"
+  | "farmer"
+  | "traveler";
+
+type Weather = {
+  current: {
+    temperature_2m: number;
+    relative_humidity_2m: number;
+    apparent_temperature: number;
+    precipitation: number;
+    rain: number;
+    snowfall: number;
+    weather_code: number;
+    wind_speed_10m: number;
+    wind_direction_10m: number;
+    pressure_msl: number;
+  };
+
+  daily: {
+    time: string[];
+    weather_code: number[];
+    temperature_2m_max: number[];
+    temperature_2m_min: number[];
+    precipitation_sum: number[];
+    precipitation_probability_max: number[];
+    wind_speed_10m_max: number[];
+  };
+
+  hourly: {
+    time: string[];
+    temperature_2m: number[];
+    precipitation_probability: number[];
+    precipitation: number[];
+    weather_code: number[];
+    wind_speed_10m: number[];
+  };
+
+  timezone: string;
+};
+
+const languages: Record<string, string> = {
   en: "English",
   te: "Telugu",
   hi: "Hindi",
   ta: "Tamil",
   kn: "Kannada",
   ml: "Malayalam",
-  mr: "Marathi",
   bn: "Bengali",
+  mr: "Marathi",
+  es: "Spanish",
+  fr: "French",
+  de: "German",
+  ja: "Japanese"
 };
+const translations: Record<
+  string,
+  Record<string, string>
+> = {
+  en: {
+    weatherMode: "WEATHER MODE",
+    farmerMode: "FARMER MODE",
+    travelerMode: "TRAVELER MODE",
+    weather: "Weather",
+    farmer: "Farmer",
+    traveler: "Traveler",
+    search: "Search any place or ask WeatherGPT…",
+    map: "Map",
+    pauseGlobe: "Pause globe",
+    rotateGlobe: "Rotate globe",
+    cultivate: "What can I cultivate here?",
+    loadingCrops: "Loading crop guidance…",
+    liveTracking: "Live travel tracking",
+    travelDescription:
+      "Your weather location follows browser GPS while Traveler Mode is active.",
+    live: "LIVE",
+    off: "OFF",
+    feelsLike: "Feels like",
+    repliesIn: "Replies in"
+  },
 
-const weatherDescriptions: Record<number, string> = {
-  0: "Clear sky",
-  1: "Mainly clear",
-  2: "Partly cloudy",
-  3: "Overcast",
-  45: "Fog",
-  48: "Depositing rime fog",
-  51: "Light drizzle",
-  53: "Moderate drizzle",
-  55: "Dense drizzle",
-  61: "Slight rain",
-  63: "Moderate rain",
-  65: "Heavy rain",
-  71: "Slight snow",
-  73: "Moderate snow",
-  75: "Heavy snow",
-  80: "Rain showers",
-  81: "Moderate rain showers",
-  82: "Violent rain showers",
-  95: "Thunderstorm",
-  96: "Thunderstorm with hail",
-  99: "Severe thunderstorm",
+  te: {
+    weatherMode: "వాతావరణ మోడ్",
+    farmerMode: "రైతు మోడ్",
+    travelerMode: "ప్రయాణ మోడ్",
+    weather: "వాతావరణం",
+    farmer: "రైతు",
+    traveler: "ప్రయాణం",
+    search: "ఏదైనా ప్రదేశాన్ని వెతకండి లేదా WeatherGPTని అడగండి…",
+    map: "మ్యాప్",
+    pauseGlobe: "గ్లోబ్ ఆపండి",
+    rotateGlobe: "గ్లోబ్ తిప్పండి",
+    cultivate: "ఇక్కడ నేను ఏమి సాగు చేయగలను?",
+    loadingCrops: "పంట సూచనలు లోడ్ అవుతున్నాయి…",
+    liveTracking: "ప్రత్యక్ష ప్రయాణ ట్రాకింగ్",
+    travelDescription:
+      "Traveler Mode యాక్టివ్‌లో ఉన్నప్పుడు మీ వాతావరణ ప్రదేశం GPSను అనుసరిస్తుంది.",
+    live: "లైవ్",
+    off: "ఆఫ్",
+    feelsLike: "అనిపించే ఉష్ణోగ్రత",
+    repliesIn: "సమాధానాలు"
+  },
+
+  hi: {
+    weatherMode: "मौसम मोड",
+    farmerMode: "किसान मोड",
+    travelerMode: "यात्री मोड",
+    weather: "मौसम",
+    farmer: "किसान",
+    traveler: "यात्री",
+    search: "कोई स्थान खोजें या WeatherGPT से पूछें…",
+    map: "मानचित्र",
+    pauseGlobe: "ग्लोब रोकें",
+    rotateGlobe: "ग्लोब घुमाएँ",
+    cultivate: "मैं यहाँ क्या उगा सकता हूँ?",
+    loadingCrops: "फसल सलाह लोड हो रही है…",
+    liveTracking: "लाइव यात्रा ट्रैकिंग",
+    travelDescription:
+      "Traveler Mode सक्रिय होने पर आपका मौसम स्थान GPS का अनुसरण करता है।",
+    live: "लाइव",
+    off: "बंद",
+    feelsLike: "महसूस होता है",
+    repliesIn: "जवाब"
+  },
+
+  ta: {
+    weatherMode: "வானிலை பயன்முறை",
+    farmerMode: "விவசாயி பயன்முறை",
+    travelerMode: "பயணி பயன்முறை",
+    weather: "வானிலை",
+    farmer: "விவசாயி",
+    traveler: "பயணி",
+    search: "எந்த இடத்தையும் தேடுங்கள் அல்லது WeatherGPT-ஐ கேளுங்கள்…",
+    map: "வரைபடம்",
+    pauseGlobe: "குளோபை நிறுத்து",
+    rotateGlobe: "குளோபை சுழற்று",
+    cultivate: "இங்கே நான் என்ன பயிரிடலாம்?",
+    loadingCrops: "பயிர் ஆலோசனை ஏற்றப்படுகிறது…",
+    liveTracking: "நேரடி பயண கண்காணிப்பு",
+    travelDescription:
+      "Traveler Mode செயல்பாட்டில் இருக்கும்போது உங்கள் வானிலை இருப்பிடம் GPS-ஐ பின்தொடரும்.",
+    live: "நேரலை",
+    off: "ஆஃப்",
+    feelsLike: "உணரப்படும் வெப்பநிலை",
+    repliesIn: "பதில்கள்"
+  }
 };
+function t(key: string) {
+  return (
+    translations[language]?.[key] ||
+    translations.en[key] ||
+    key
+  );
+}
+function weatherLabel(code: number) {
+  if (code === 0) return "Clear sky";
+
+  if ([1, 2, 3].includes(code))
+    return "Partly cloudy";
+
+  if ([45, 48].includes(code))
+    return "Fog";
+
+  if ([51, 53, 55, 56, 57].includes(code))
+    return "Drizzle";
+
+  if (
+    [61, 63, 65, 66, 67, 80, 81, 82]
+      .includes(code)
+  )
+    return "Rain";
+
+  if ([71, 73, 75, 77, 85, 86].includes(code))
+    return "Snow";
+
+  if ([95, 96, 99].includes(code))
+    return "Thunderstorm";
+
+  return "Weather event";
+}
 
 function weatherIcon(code: number) {
-  if (code >= 95) return "⛈️";
-  if (code >= 80) return "🌧️";
-  if (code >= 61) return "🌧️";
-  if (code >= 51) return "🌦️";
-  if (code >= 45) return "🌫️";
-  if (code >= 1 && code <= 3) return "⛅";
-  return "☀️";
+  if (code === 0)
+    return <Sun size={20} />;
+
+  if ([1, 2, 3].includes(code))
+    return <Cloud size={20} />;
+
+  if (
+    [61, 63, 65, 80, 81, 82].includes(code)
+  )
+    return <CloudRain size={20} />;
+
+  if ([95, 96, 99].includes(code))
+    return <CloudLightning size={20} />;
+
+  return <Cloud size={20} />;
 }
 
 export default function WeatherPage() {
-  const [language, setLanguage] = useState("en");
-
+  const [language, setLanguage] =
+    useState("en");
+const t = (key: string) =>
+  translations[language]?.[key] ||
+  translations.en[key] ||
+  key;
   const [mode, setMode] =
-    useState<Mode>("general");
+    useState<Mode>("weather");
 
-  const [sidebarOpen, setSidebarOpen] =
+const [location, setLocation] =
+  useState<Location>({
+    name: "India",
+    country: "India",
+    lat: 20.5937,
+    lon: 78.9629
+  });
+  const [weather, setWeather] =
+    useState<Weather | null>(null);
+
+  const [loading, setLoading] =
     useState(true);
+
+  const [locationLoading, setLocationLoading] =
+    useState(false);
 
   const [mapOpen, setMapOpen] =
     useState(false);
 
-  const [locationPermission, setLocationPermission] =
-    useState(false);
+  const [searchText, setSearchText] =
+    useState("");
 
-  const [locationLoading, setLocationLoading] =
+  const [chatOpen, setChatOpen] =
     useState(true);
-
-  const [weatherLoading, setWeatherLoading] =
-    useState(false);
-
-  const [selectedLocation, setSelectedLocation] =
-    useState({
-      lat: 17.385,
-      lng: 78.4867,
-      city: "Hyderabad",
-      country: "India",
-    });
-
-  const [weather, setWeather] =
-    useState<WeatherData | null>(null);
-
-  const [forecast, setForecast] =
-    useState<ForecastDay[]>([]);
-
-  const [events, setEvents] =
-    useState<WeatherEvent[]>([]);
-
-  const [chatMessages, setChatMessages] =
-    useState<ChatMessage[]>([
-      {
-        role: "assistant",
-        text: "Hello! I am WeatherGPT. Ask me anything about the weather.",
-      },
-    ]);
 
   const [chatInput, setChatInput] =
     useState("");
 
-  const [chatOpen, setChatOpen] =
-    useState(false);
+  const [messages, setMessages] =
+    useState<
+      {
+        role: "user" | "assistant";
+        text: string;
+      }[]
+    >([]);
 
   const [listening, setListening] =
     useState(false);
 
-  const [soundEnabled, setSoundEnabled] =
+  const [autoRotate, setAutoRotate] =
     useState(true);
 
-  const [activeEffect, setActiveEffect] =
-    useState("");
+  const [farmerData, setFarmerData] =
+    useState<
+      {
+        crop: string;
+        reason: string;
+      }[]
+    >([]);
 
-  const globeRef = useRef<any>(null);
+  const [travelerLive, setTravelerLive] =
+    useState(false);
+
+  const [effectsEnabled, setEffectsEnabled] =
+    useState(true);
+
+  const globeRef =
+    useRef<any>(null);
 
   const recognitionRef =
     useRef<any>(null);
 
-  const selectedLanguageName =
-    languageNames[language] || "English";
-
-  /*
-   * LOAD SAVED LANGUAGE
-   */
+  const lastTravelerUpdate =
+    useRef(0);
 
   useEffect(() => {
     const saved =
@@ -212,487 +336,411 @@ export default function WeatherPage() {
         "weathergpt-language"
       );
 
-    if (saved) {
+    if (
+      saved &&
+      languages[saved]
+    ) {
       setLanguage(saved);
     }
   }, []);
 
-  /*
-   * LOCATION PERMISSION
-   */
+  const loadWeather =
+    useCallback(
+      async (loc: Location) => {
+        setLoading(true);
 
-  useEffect(() => {
-    requestLocation();
-  }, []);
-
-  async function requestLocation() {
-    setLocationLoading(true);
-
-    if (!navigator.geolocation) {
-      setLocationPermission(false);
-      setLocationLoading(false);
-      fetchWeather(
-        selectedLocation.lat,
-        selectedLocation.lng
-      );
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const lat =
-          position.coords.latitude;
-
-        const lng =
-          position.coords.longitude;
-
-        setLocationPermission(true);
-
-        await selectLocation(
-          lat,
-          lng,
-          "Current location",
-          "Current location"
-        );
-
-        setLocationLoading(false);
-      },
-      () => {
-        setLocationPermission(false);
-        setLocationLoading(false);
-
-        fetchWeather(
-          selectedLocation.lat,
-          selectedLocation.lng
-        );
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-      }
-    );
-  }
-
-  /*
-   * REVERSE GEOCODING
-   */
-
-  async function reverseGeocode(
-    lat: number,
-    lng: number
-  ) {
-    try {
-      const response = await fetch(
-        `${API_URL}/location/reverse?lat=${lat}&lon=${lng}`
-      );
-
-      if (!response.ok) {
-        return {
-          city: "Selected location",
-          country: "",
-        };
-      }
-
-      return await response.json();
-    } catch {
-      return {
-        city: "Selected location",
-        country: "",
-      };
-    }
-  }
-
-  /*
-   * SELECT LOCATION
-   */
-
-  async function selectLocation(
-    lat: number,
-    lng: number,
-    city?: string,
-    country?: string
-  ) {
-    setWeatherLoading(true);
-
-    const location =
-      city && country
-        ? { city, country }
-        : await reverseGeocode(
-            lat,
-            lng
+        try {
+          const r = await fetch(
+            `${API}/api/weather?lat=${loc.lat}&lon=${loc.lon}&timezone=auto`
           );
 
-    setSelectedLocation({
-      lat,
-      lng,
-      city: location.city,
-      country: location.country,
-    });
-
-    await fetchWeather(lat, lng);
-
-    rotateGlobe(lat, lng);
-
-    setMapOpen(false);
-  }
-
-  /*
-   * FETCH WEATHER
-   */
-
-  async function fetchWeather(
-    lat: number,
-    lng: number
-  ) {
-    setWeatherLoading(true);
-
-    try {
-      const response = await fetch(
-        `${API_URL}/weather?lat=${lat}&lon=${lng}`
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "Weather request failed"
-        );
-      }
-
-      const data = await response.json();
-
-      setWeather(data.current);
-      setForecast(data.forecast);
-      setEvents(data.events);
-    } catch (error) {
-      console.error(error);
-
-      /*
-       * FALLBACK DEMO DATA
-       */
-
-      setWeather({
-        latitude: lat,
-        longitude: lng,
-        temperature: 28,
-        feelsLike: 30,
-        humidity: 68,
-        windSpeed: 13,
-        pressure: 1012,
-        visibility: 10,
-        uv: 6,
-        weatherCode: 2,
-        rainProbability: 30,
-        city: selectedLocation.city,
-        country: selectedLocation.country,
-      });
-
-      const demoForecast: ForecastDay[] =
-        Array.from({ length: 7 }).map(
-          (_, index) => {
-            const date =
-              new Date();
-
-            date.setDate(
-              date.getDate() + index
+          if (!r.ok) {
+            throw new Error(
+              "Weather request failed"
             );
-
-            return {
-              date:
-                date
-                  .toISOString()
-                  .split("T")[0],
-              temperature:
-                27 + index % 3,
-              rain:
-                20 + index * 5,
-              weatherCode:
-                index === 2
-                  ? 61
-                  : 2,
-            };
           }
-        );
 
-      setForecast(demoForecast);
+          setWeather(
+            await r.json()
+          );
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setLoading(false);
+        }
+      },
+      []
+    );
 
-      setEvents([
-        {
-          date:
-            new Date()
-              .toISOString()
-              .split("T")[0],
-          type: "clear",
-          title: "Clear sky",
-          description:
-            "Mostly clear weather expected.",
+  useEffect(() => {
+    loadWeather(location);
+  }, [
+    location,
+    loadWeather
+  ]);
+
+  const useCurrentLocation =
+    useCallback(() => {
+      if (!navigator.geolocation)
+        return;
+
+      setLocationLoading(true);
+
+      navigator.geolocation.getCurrentPosition(
+        async ({ coords }) => {
+          try {
+            const r =
+              await fetch(
+                `${API}/api/geocode/reverse?lat=${coords.latitude}&lon=${coords.longitude}`
+              );
+
+            const d =
+              await r.json();
+
+            setLocation({
+              name:
+                d.name ||
+                "Current location",
+              country:
+                d.country || "",
+              lat:
+                coords.latitude,
+              lon:
+                coords.longitude
+            });
+          } finally {
+            setLocationLoading(false);
+          }
         },
-      ]);
-    } finally {
-      setWeatherLoading(false);
-    }
-  }
+        () =>
+          setLocationLoading(false),
+        {
+          enableHighAccuracy: true,
+          timeout: 10000
+        }
+      );
+    }, []);
 
-  /*
-   * GLOBE ROTATION
-   */
+  useEffect(() => {
+    useCurrentLocation();
+  }, [useCurrentLocation]);
 
-  function rotateGlobe(
-    lat: number,
-    lng: number
-  ) {
-    if (!globeRef.current) return;
+  useEffect(() => {
+    if (!globeRef.current)
+      return;
 
     globeRef.current.pointOfView(
       {
-        lat,
-        lng,
-        altitude: 1.8,
+        lat: location.lat,
+        lng: location.lon,
+        altitude: 1.55
       },
-      1800
+      1400
     );
-  }
-
-  /*
-   * MANUAL GLOBE COUNTRY SELECTION
-   */
-
-  function handleGlobeClick(
-    point: any
-  ) {
-    if (!point) return;
-
-    const lat = point.lat;
-    const lng = point.lng;
-
-    selectLocation(lat, lng);
-  }
-
-  /*
-   * WEATHER EVENT EFFECTS
-   */
-
-  const currentEvent =
-    events.length > 0
-      ? events[0]
-      : null;
+  }, [location]);
 
   useEffect(() => {
-    if (!weather) return;
+    if (!globeRef.current)
+      return;
 
-    let effect = "";
+    globeRef.current
+      .controls()
+      .autoRotate =
+      autoRotate;
 
+    globeRef.current
+      .controls()
+      .autoRotateSpeed =
+      0.35;
+  }, [
+    autoRotate,
+    weather
+  ]);
+
+  useEffect(() => {
+    if (mode !== "farmer")
+      return;
+
+    fetch(
+      `${API}/api/farmer/crops?lat=${location.lat}&lon=${location.lon}`
+    )
+      .then((r) => r.json())
+      .then(setFarmerData)
+      .catch(console.error);
+  }, [
+    mode,
+    location
+  ]);
+
+  useEffect(() => {
+    if (mode !== "traveler")
+      return;
+
+    setTravelerLive(true);
+
+    return () =>
+      setTravelerLive(false);
+  }, [mode]);
+
+  useEffect(() => {
     if (
-      weather.weatherCode >= 95
+      !travelerLive ||
+      mode !== "traveler" ||
+      !navigator.geolocation
     ) {
-      effect = "storm";
-    } else if (
-      weather.weatherCode >= 65
-    ) {
-      effect = "rain";
-    } else if (
-      weather.weatherCode >= 61
-    ) {
-      effect = "rain";
-    } else {
-      effect = "clear";
-    }
-
-    setActiveEffect(effect);
-
-    const timer =
-      setTimeout(() => {
-        setActiveEffect("");
-      }, 7000);
-
-    return () => clearTimeout(timer);
-  }, [weather]);
-
-  /*
-   * WEATHER EFFECT SOUND
-   */
-
-  function playEffectSound(
-    type: string
-  ) {
-    if (!soundEnabled) return;
-
-    /*
-     * Add actual mp3/wav files here later.
-     *
-     * Example:
-     *
-     * const audio = new Audio(
-     *   `/sounds/${type}.mp3`
-     * );
-     *
-     * audio.play();
-     */
-
-    console.log(
-      `Playing ${type} weather sound`
-    );
-  }
-
-  /*
-   * CHAT
-   */
-
-  async function sendChat() {
-    const message =
-      chatInput.trim();
-
-    if (!message) return;
-
-    setChatInput("");
-
-    setChatMessages((previous) => [
-      ...previous,
-      {
-        role: "user",
-        text: message,
-      },
-    ]);
-
-    try {
-      const response = await fetch(
-        `${API_URL}/ai/chat`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            message,
-            language,
-            mode,
-            location: {
-              latitude:
-                selectedLocation.lat,
-              longitude:
-                selectedLocation.lng,
-              city:
-                selectedLocation.city,
-              country:
-                selectedLocation.country,
-            },
-            weather,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("AI failed");
-      }
-
-      const data =
-        await response.json();
-
-      setChatMessages((previous) => [
-        ...previous,
-        {
-          role: "assistant",
-          text: data.reply,
-        },
-      ]);
-    } catch {
-      const fallback =
-        getLocalAssistantReply(
-          message
-        );
-
-      setChatMessages((previous) => [
-        ...previous,
-        {
-          role: "assistant",
-          text: fallback,
-        },
-      ]);
-    }
-  }
-
-  function getLocalAssistantReply(
-    message: string
-  ) {
-    const temperature =
-      weather?.temperature ?? 28;
-
-    const condition =
-      weatherDescriptions[
-        weather?.weatherCode ?? 2
-      ];
-
-    if (language === "te") {
-      return `ప్రస్తుతం ${selectedLocation.city}లో ఉష్ణోగ్రత ${temperature}°C. వాతావరణం ${condition}.`;
-    }
-
-    if (language === "hi") {
-      return `अभी ${selectedLocation.city} में तापमान ${temperature}°C है और मौसम ${condition} है।`;
-    }
-
-    return `Currently in ${selectedLocation.city}, it is ${temperature}°C with ${condition}.`;
-  }
-
-  /*
-   * VOICE INPUT
-   */
-
-  function startVoice() {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any)
-        .webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      alert(
-        "Voice recognition is not supported in this browser."
-      );
       return;
     }
 
-    if (listening) {
-      recognitionRef.current?.stop();
+    const id =
+      navigator.geolocation.watchPosition(
+        async ({ coords }) => {
+          const now =
+            Date.now();
+
+          if (
+            now -
+              lastTravelerUpdate.current <
+            60000
+          ) {
+            return;
+          }
+
+          lastTravelerUpdate.current =
+            now;
+
+          try {
+            const r =
+              await fetch(
+                `${API}/api/geocode/reverse?lat=${coords.latitude}&lon=${coords.longitude}`
+              );
+
+            const d =
+              await r.json();
+
+            setLocation({
+              name:
+                d.name ||
+                "Moving location",
+              country:
+                d.country || "",
+              lat:
+                coords.latitude,
+              lon:
+                coords.longitude
+            });
+          } catch {}
+        }
+      );
+
+    return () =>
+      navigator.geolocation.clearWatch(
+        id
+      );
+  }, [
+    travelerLive,
+    mode
+  ]);
+
+  const eventType =
+    useMemo(() => {
+      if (!weather)
+        return "clear";
+
+      const c =
+        weather.current.weather_code;
+
+      if (
+        [95, 96, 99].includes(c)
+      ) {
+        return "storm";
+      }
+
+      if (
+        [61, 63, 65, 80, 81, 82]
+          .includes(c) &&
+        weather.current
+          .precipitation >= 5
+      ) {
+        return "heavy-rain";
+      }
+
+      if (
+        weather.daily.weather_code.some(
+          (x) =>
+            [95, 96, 99].includes(x)
+        )
+      ) {
+        return "storm";
+      }
+
+      if (
+        weather.daily.precipitation_sum.some(
+          (x) => x >= 30
+        )
+      ) {
+        return "heavy-rain";
+      }
+
+      if (c === 0)
+        return "clear";
+
+      return "cloud";
+    }, [weather]);
+
+  const chooseMapLocation =
+    (loc: Location) => {
+      setLocation(loc);
+      setMapOpen(false);
+      setSearchText("");
+    };
+
+  async function sendChat(
+    preset?: string
+  ) {
+    const text =
+      (preset ?? chatInput).trim();
+
+    if (!text)
+      return;
+
+    setMessages((old) => [
+      ...old,
+      {
+        role: "user",
+        text
+      }
+    ]);
+
+    setChatInput("");
+
+    try {
+      const r =
+        await fetch(
+          `${API}/api/chat`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+            body: JSON.stringify({
+              message: text,
+              language,
+              mode,
+              location,
+              weather
+            })
+          }
+        );
+
+      const d =
+        await r.json();
+
+      const answer =
+        d.answer ||
+        "I couldn't generate a weather answer.";
+
+      setMessages((old) => [
+        ...old,
+        {
+          role: "assistant",
+          text: answer
+        }
+      ]);
+
+      speak(answer);
+    } catch {
+      setMessages((old) => [
+        ...old,
+        {
+          role: "assistant",
+          text:
+            "WeatherGPT backend is unavailable. Start FastAPI on port 8000."
+        }
+      ]);
+    }
+  }
+
+  function speak(text: string) {
+    if (
+      !("speechSynthesis" in window)
+    )
+      return;
+
+    window.speechSynthesis.cancel();
+
+    const u =
+      new SpeechSynthesisUtterance(
+        text
+      );
+
+    u.lang =
+      language === "te"
+        ? "te-IN"
+        : `${language}-IN`;
+
+    window.speechSynthesis.speak(u);
+  }
+
+  function toggleVoice() {
+    const Recognition =
+      (window as any)
+        .SpeechRecognition ||
+      (window as any)
+        .webkitSpeechRecognition;
+
+    if (!Recognition) {
+      alert(
+        "Voice input is not supported by this browser. Try Chrome or Edge."
+      );
+
+      return;
+    }
+
+    if (
+      listening &&
+      recognitionRef.current
+    ) {
+      recognitionRef.current.stop();
       setListening(false);
       return;
     }
 
     const recognition =
-      new SpeechRecognition();
+      new Recognition();
 
     recognition.lang =
       language === "te"
         ? "te-IN"
-        : language === "hi"
-        ? "hi-IN"
-        : language === "ta"
-        ? "ta-IN"
-        : language === "kn"
-        ? "kn-IN"
-        : "en-IN";
+        : `${language}-IN`;
 
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults =
+      false;
 
-    recognition.onstart = () => {
+    recognition.continuous =
+      false;
+
+    recognition.onstart = () =>
       setListening(true);
-    };
 
-    recognition.onresult = (
-      event: any
-    ) => {
-      const transcript =
-        event.results[0][0]
-          .transcript;
-
-      setChatInput(transcript);
-    };
-
-    recognition.onerror = () => {
+    recognition.onend = () =>
       setListening(false);
-    };
 
-    recognition.onend = () => {
+    recognition.onerror = () =>
       setListening(false);
-    };
+
+    recognition.onresult =
+      (event: any) => {
+        const transcript =
+          event.results[0][0]
+            .transcript;
+
+        setChatInput(
+          transcript
+        );
+
+        sendChat(transcript);
+      };
 
     recognitionRef.current =
       recognition;
@@ -700,1170 +748,823 @@ export default function WeatherPage() {
     recognition.start();
   }
 
-  /*
-   * TEXT TO SPEECH
-   */
-
-  function speak(text: string) {
-    if (!("speechSynthesis" in window))
-      return;
-
-    window.speechSynthesis.cancel();
-
-    const utterance =
-      new SpeechSynthesisUtterance(
-        text
-      );
-
-    utterance.lang =
-      language === "te"
-        ? "te-IN"
-        : language === "hi"
-        ? "hi-IN"
-        : language === "ta"
-        ? "ta-IN"
-        : language === "kn"
-        ? "kn-IN"
-        : "en-IN";
-
-    window.speechSynthesis.speak(
-      utterance
-    );
-  }
-
-  /*
-   * SEARCH BUTTON
-   */
-
-  function openSearchMap() {
-    setMapOpen(true);
-  }
-
-  /*
-   * WEATHER STATISTICS
-   */
-
-  const weatherStats = useMemo(
-    () => [
-      {
-        icon: <Thermometer size={20} />,
-        label: "Feels like",
-        value: `${weather?.feelsLike ?? "--"}°C`,
-      },
-      {
-        icon: <Droplets size={20} />,
-        label: "Humidity",
-        value: `${weather?.humidity ?? "--"}%`,
-      },
-      {
-        icon: <Wind size={20} />,
-        label: "Wind",
-        value: `${weather?.windSpeed ?? "--"} km/h`,
-      },
-      {
-        icon: <Gauge size={20} />,
-        label: "Pressure",
-        value: `${weather?.pressure ?? "--"} hPa`,
-      },
-      {
-        icon: <Eye size={20} />,
-        label: "Visibility",
-        value: `${weather?.visibility ?? "--"} km`,
-      },
-      {
-        icon: <Sun size={20} />,
-        label: "UV index",
-        value: `${weather?.uv ?? "--"}`,
-      },
-    ],
-    [weather]
-  );
+  const globePoints = [
+    {
+      lat: location.lat,
+      lng: location.lon,
+      size: 1,
+      color: "#6ee7ff",
+      label: `${Math.round(
+        weather?.current
+          .temperature_2m ?? 0
+      )}°C`
+    }
+  ];
 
   return (
     <main
-      className={`weather-page effect-${activeEffect}`}
+      className={`weather-app event-${eventType} ${
+        effectsEnabled
+          ? ""
+          : "effects-off"
+      }`}
     >
-      <div className="weather-overlay" />
-
-      {/* WEATHER EFFECTS */}
-
-      {activeEffect === "rain" && (
-        <div className="rain-effect">
-          {Array.from({
-            length: 80,
-          }).map((_, index) => (
-            <span
-              key={index}
-              style={{
-                left: `${
-                  Math.random() * 100
-                }%`,
-                animationDelay: `${
-                  Math.random() * 2
-                }s`,
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {activeEffect === "storm" && (
-        <div
-          className="storm-effect"
-          onClick={() =>
-            playEffectSound("thunder")
-          }
-        >
-          <div className="lightning">
-            ⚡
-          </div>
-        </div>
-      )}
-
-      {activeEffect === "tsunami" && (
-        <div className="tsunami-effect">
-          🌊 🌊 🌊 🌊
-        </div>
-      )}
-
-      {activeEffect === "cyclone" && (
-        <div className="cyclone-effect">
-          🌀
-        </div>
-      )}
-
-      {activeEffect ===
-        "earthquake" && (
-        <div className="earthquake-effect" />
-      )}
-
-      <div className="weather-app">
-
-        {/* SIDEBAR */}
-
-        <aside
-          className={`weather-sidebar ${
-            sidebarOpen
-              ? ""
-              : "sidebar-hidden"
-          }`}
-        >
-          <div className="sidebar-logo">
-            🌤️ WeatherGPT
-          </div>
-
-          <button
-            className="new-chat-button"
-            onClick={() =>
-              setChatMessages([
-                {
-                  role: "assistant",
-                  text: "How can I help with the weather?",
-                },
-              ])
-            }
-          >
-            <Plus size={17} />
-            &nbsp; New chat
-          </button>
-
-          <div className="sidebar-section">
-            <span>MODES</span>
-
-            <button
-              onClick={() =>
-                setMode("general")
-              }
-              className={
-                mode === "general"
-                  ? "active"
-                  : ""
-              }
-            >
-              <CloudSun size={17} />
-              General
-            </button>
-
-            <button
-              onClick={() =>
-                setMode("farmer")
-              }
-              className={
-                mode === "farmer"
-                  ? "active"
-                  : ""
-              }
-            >
-              <Sprout size={17} />
-              Farmer
-            </button>
-
-            <button
-              onClick={() =>
-                setMode("traveler")
-              }
-              className={
-                mode === "traveler"
-                  ? "active"
-                  : ""
-              }
-            >
-              <Plane size={17} />
-              Traveler
-            </button>
-          </div>
-
-          <div className="sidebar-section">
-            <span>LOCATION</span>
-
-            <button
-              className="sidebar-location"
-              onClick={
-                requestLocation
-              }
-            >
-              <LocateFixed
-                size={16}
-              />
-              {selectedLocation.city}
-            </button>
-          </div>
-
-          <div className="sidebar-bottom">
-            <button
-              onClick={() =>
-                setSoundEnabled(
-                  !soundEnabled
-                )
-              }
-            >
-              {soundEnabled ? (
-                <>
-                  <Volume2 size={16} />
-                  Sound effects ON
-                </>
-              ) : (
-                <>
-                  <VolumeX size={16} />
-                  Sound effects OFF
-                </>
-              )}
-            </button>
-          </div>
-        </aside>
-
-        {/* MAIN */}
-
-        <section className="chat-main">
-
-          {/* TOP BAR */}
-
-          <header className="chat-topbar">
-
-            <div className="topbar-left">
-              <button
-                className="mobile-menu"
-                onClick={() =>
-                  setSidebarOpen(
-                    !sidebarOpen
-                  )
-                }
-              >
-                <Menu />
-              </button>
-
-              <div>
-                <h1>
-                  WeatherGPT
-                </h1>
-
-                <p>
-                  {selectedLocation.city},{" "}
-                  {selectedLocation.country}
-                </p>
-              </div>
-            </div>
-
-            <div className="topbar-status">
-              <span className="status-dot" />
-              Live weather
-            </div>
-          </header>
-
-          {/* CHAT CONTENT */}
-
-          <div className="chat-scroll">
-            <div className="chat-content">
-
-              {/* SEARCH */}
-
-              <button
-                className="weather-search"
-                onClick={
-                  openSearchMap
-                }
-              >
-                <Search size={19} />
-
-                <span>
-                  Search location...
-                </span>
-
-                <MapPin
-                  size={17}
-                />
-              </button>
-
-              {/* CURRENT WEATHER */}
-
-              <div className="weather-dashboard">
-
-                <div className="current-weather">
-
-                  <div className="weather-primary">
-
-                    <div className="weather-location">
-                      <MapPin
-                        size={17}
-                      />
-
-                      {selectedLocation.city},{" "}
-                      {selectedLocation.country}
-                    </div>
-
-                    <div className="big-weather-icon">
-                      {weatherIcon(
-                        weather
-                          ?.weatherCode ??
-                          2
-                      )}
-                    </div>
-
-                    <div className="big-temperature">
-                      {weather
-                        ? Math.round(
-                            weather.temperature
-                          )
-                        : "--"}
-                      <sup>°C</sup>
-                    </div>
-
-                    <div className="weather-condition">
-                      {
-                        weatherDescriptions[
-                          weather
-                            ?.weatherCode ??
-                            2
-                        ]
-                      }
-                    </div>
-
-                    <div className="rain-probability">
-                      🌧️ Rain probability:{" "}
-                      {weather
-                        ?.rainProbability ??
-                        "--"}
-                      %
-                    </div>
-
-                  </div>
-
-                  <div className="weather-globe-wrapper">
-
-                    <Globe
-                      ref={globeRef}
-                      width={420}
-                      height={420}
-                      backgroundColor="rgba(0,0,0,0)"
-                      globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-                      bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-                      atmosphereColor="#4fc3ff"
-                      atmosphereAltitude={0.18}
-                      onGlobeClick={
-                        handleGlobeClick
-                      }
-                    />
-
-                    <div className="globe-location">
-                      <Navigation
-                        size={14}
-                      />
-                      {selectedLocation.city}
-                    </div>
-
-                  </div>
-
-                  <div className="weather-stats">
-
-                    {weatherStats.map(
-                      (stat) => (
-                        <div
-                          key={
-                            stat.label
-                          }
-                        >
-                          {stat.icon}
-
-                          <small>
-                            {
-                              stat.label
-                            }
-                          </small>
-
-                          <strong>
-                            {
-                              stat.value
-                            }
-                          </strong>
-                        </div>
-                      )
-                    )}
-
-                  </div>
-
-                </div>
-
-                {/* FORECAST */}
-
-                <section className="forecast-section">
-
-                  <div className="section-title-row">
-                    <h2>
-                      {mode ===
-                      "farmer"
-                        ? "🌾 Farming forecast"
-                        : mode ===
-                          "traveler"
-                        ? "✈️ Travel forecast"
-                        : "7-day forecast"}
-                    </h2>
-
-                    <span className="forecast-location">
-                      {selectedLocation.city}
-                    </span>
-                  </div>
-
-                  <div className="forecast-scroll">
-
-                    {forecast.map(
-                      (day) => (
-                        <div
-                          className="forecast-day"
-                          key={
-                            day.date
-                          }
-                        >
-                          <small>
-                            {new Date(
-                              day.date
-                            ).toLocaleDateString(
-                              language ===
-                                "en"
-                                ? "en-IN"
-                                : language,
-                              {
-                                weekday:
-                                  "short",
-                              }
-                            )}
-                          </small>
-
-                          <strong>
-                            {weatherIcon(
-                              day.weatherCode
-                            )}
-                          </strong>
-
-                          <b>
-                            {Math.round(
-                              day.temperature
-                            )}
-                            °C
-                          </b>
-
-                          <em>
-                            💧{" "}
-                            {day.rain}%
-                          </em>
-                        </div>
-                      )
-                    )}
-
-                  </div>
-
-                </section>
-
-                {/* FARMER MODE */}
-
-                {mode ===
-                  "farmer" && (
-                  <section className="mode-panel farmer-panel">
-
-                    <h2>
-                      🌾 Farmer Assistant
-                    </h2>
-
-                    <p>
-                      Crop recommendations
-                      for your current
-                      location.
-                    </p>
-
-                    <div className="crop-grid">
-
-                      <div>
-                        🌾
-                        <strong>
-                          Rice
-                        </strong>
-                        <small>
-                          Suitable
-                          with good
-                          water
-                          availability
-                        </small>
-                      </div>
-
-                      <div>
-                        🌽
-                        <strong>
-                          Maize
-                        </strong>
-                        <small>
-                          Moderate
-                          suitability
-                        </small>
-                      </div>
-
-                      <div>
-                        🌱
-                        <strong>
-                          Vegetables
-                        </strong>
-                        <small>
-                          Good
-                          conditions
-                        </small>
-                      </div>
-
-                    </div>
-
-                  </section>
-                )}
-
-                {/* TRAVELER MODE */}
-
-                {mode ===
-                  "traveler" && (
-                  <section className="mode-panel traveler-panel">
-
-                    <h2>
-                      ✈️ Traveler Assistant
-                    </h2>
-
-                    <p>
-                      Weather for your
-                      current journey.
-                    </p>
-
-                    <div className="traveler-info">
-
-                      <div>
-                        <Navigation />
-                        <strong>
-                          Live location
-                        </strong>
-                        <span>
-                          {selectedLocation.city}
-                        </span>
-                      </div>
-
-                      <div>
-                        <CloudSun />
-                        <strong>
-                          Today's weather
-                        </strong>
-                        <span>
-                          {
-                            weatherDescriptions[
-                              weather
-                                ?.weatherCode ??
-                                2
-                            ]
-                          }
-                        </span>
-                      </div>
-
-                      <div>
-                        <UmbrellaIcon />
-                        <strong>
-                          Rain chance
-                        </strong>
-                        <span>
-                          {
-                            weather
-                              ?.rainProbability ??
-                              0
-                          }
-                          %
-                        </span>
-                      </div>
-
-                    </div>
-
-                  </section>
-                )}
-
-                {/* CALENDAR */}
-
-                <section className="calendar-section">
-
-                  <div className="section-title-row">
-
-                    <h2>
-                      <CalendarDays
-                        size={20}
-                      />
-                      Weather Calendar
-                    </h2>
-
-                    <span>
-                      Upcoming events
-                    </span>
-
-                  </div>
-
-                  <div className="event-list">
-
-                    {events.length ===
-                    0 ? (
-                      <div className="empty-events">
-                        No major weather
-                        events predicted.
-                      </div>
-                    ) : (
-                      events.map(
-                        (
-                          event,
-                          index
-                        ) => (
-                          <button
-                            key={
-                              `${event.date}-${index}`
-                            }
-                            className={`event-item event-${event.type}`}
-                            onClick={() => {
-                              setActiveEffect(
-                                event.type
-                              );
-
-                              playEffectSound(
-                                event.type
-                              );
-                            }}
-                          >
-                            <span>
-                              {event.type ===
-                                "storm" &&
-                                "⚡"}
-
-                              {event.type ===
-                                "rain" &&
-                                "🌧️"}
-
-                              {event.type ===
-                                "tsunami" &&
-                                "🌊"}
-
-                              {event.type ===
-                                "cyclone" &&
-                                "🌀"}
-
-                              {event.type ===
-                                "earthquake" &&
-                                "🌎"}
-
-                              {event.type ===
-                                "clear" &&
-                                "☀️"}
-                            </span>
-
-                            <div>
-                              <strong>
-                                {
-                                  event.title
-                                }
-                              </strong>
-
-                              <small>
-                                {
-                                  event.date
-                                }
-                              </small>
-
-                              <small>
-                                {
-                                  event.description
-                                }
-                              </small>
-                            </div>
-                          </button>
-                        )
-                      )
-                    )}
-
-                  </div>
-
-                </section>
-
-              </div>
-
-              {/* CHAT MESSAGES */}
-
-              <div className="messages-area">
-
-                {chatMessages.map(
-                  (
-                    message,
-                    index
-                  ) => (
-                    <div
-                      className={`chat-message-row ${message.role}`}
-                      key={index}
-                    >
-                      <div className="message-avatar">
-                        {message.role ===
-                        "assistant"
-                          ? "🌤️"
-                          : "👤"}
-                      </div>
-
-                      <div className="chat-message">
-
-                        <div className="message-role">
-                          {message.role ===
-                          "assistant"
-                            ? "WeatherGPT"
-                            : "You"}
-                        </div>
-
-                        <div>
-                          {
-                            message.text
-                          }
-                        </div>
-
-                        {message.role ===
-                          "assistant" && (
-                          <button
-                            className="speak-message"
-                            onClick={() =>
-                              speak(
-                                message.text
-                              )
-                            }
-                          >
-                            <Volume2
-                              size={15}
-                            />
-                          </button>
-                        )}
-
-                      </div>
-                    </div>
-                  )
-                )}
-
-              </div>
-
-            </div>
-          </div>
-
-          {/* CHAT COMPOSER */}
-
-          <div className="chat-composer-area">
-
-            {chatOpen && (
-              <div className="floating-chat-window">
-
-                <div className="floating-chat-header">
-                  <strong>
-                    🌤️ WeatherGPT
-                  </strong>
-
-                  <button
-                    onClick={() =>
-                      setChatOpen(
-                        false
-                      )
-                    }
-                  >
-                    <X size={17} />
-                  </button>
-                </div>
-
-                <div className="floating-chat-messages">
-
-                  {chatMessages.map(
-                    (
-                      message,
-                      index
-                    ) => (
-                      <div
-                        className={`floating-message ${message.role}`}
-                        key={index}
-                      >
-                        {message.text}
-                      </div>
-                    )
-                  )}
-
-                </div>
-
-              </div>
-            )}
-
-            <div className="chat-composer">
-
-              <button
-                className={`voice-button ${
-                  listening
-                    ? "listening"
-                    : ""
-                }`}
-                onClick={
-                  startVoice
-                }
-                title="Voice assistant"
-              >
-                <Mic size={20} />
-              </button>
-
-              <input
-                value={chatInput}
-                onChange={(event) =>
-                  setChatInput(
-                    event.target.value
-                  )
-                }
-                onKeyDown={(event) => {
-                  if (
-                    event.key ===
-                    "Enter"
-                  ) {
-                    sendChat();
-                  }
-                }}
-                placeholder={
-                  language ===
-                  "te"
-                    ? "వాతావరణం గురించి అడగండి..."
-                    : language ===
-                      "hi"
-                    ? "मौसम के बारे में पूछें..."
-                    : "Ask WeatherGPT..."
-                }
-              />
-
-              <button
-                className="chat-mini-button"
-                onClick={() =>
-                  setChatOpen(
-                    !chatOpen
-                  )
-                }
-              >
-                🤖
-              </button>
-
-              <button
-                className="send-button"
-                onClick={
-                  sendChat
-                }
-              >
-                <Send size={19} />
-              </button>
-
-            </div>
-
-            <p className="composer-note">
-              WeatherGPT responds in{" "}
-              <strong>
-                {selectedLanguageName}
-              </strong>
-            </p>
-
-          </div>
-
-        </section>
-
-      </div>
-
-      {/* SEARCH / MAP MODAL */}
-
-      {mapOpen && (
-        <LocationMapModal
-          currentLat={
-            selectedLocation.lat
-          }
-          currentLng={
-            selectedLocation.lng
-          }
-          onClose={() =>
-            setMapOpen(false)
-          }
-          onSelect={(
-            lat,
-            lng,
-            city,
-            country
-          ) =>
-            selectLocation(
-              lat,
-              lng,
-              city,
-              country
-            )
-          }
+      {effectsEnabled && (
+        <WeatherEffects
+          event={eventType}
         />
       )}
 
-      {/* LOCATION LOADING */}
+      <header className="topbar">
+        <div className="brand">
+          <div className="brand-dot">
+            <Globe2 size={20} />
+          </div>
 
-      {locationLoading && (
-        <div className="location-overlay">
-          <div className="location-card">
-            <LocateFixed
-              size={40}
+          <div>
+            <strong>
+              WeatherGPT
+            </strong>
+
+            <span>
+              AI weather intelligence
+            </span>
+          </div>
+        </div>
+
+        <div className="top-location">
+          <MapPin size={15} />
+          <span>
+            {location.name}
+          </span>
+          <small>
+            {location.country}
+          </small>
+        </div>
+
+        <div className="top-actions">
+          <button
+            className="icon-button"
+            title="Current location"
+            onClick={
+              useCurrentLocation
+            }
+          >
+            <LocateFixed size={18} />
+          </button>
+
+          <button
+            className="icon-button"
+            title="Toggle weather effects"
+            onClick={() =>
+              setEffectsEnabled(
+                (v) => !v
+              )
+            }
+          >
+            <Settings2 size={18} />
+          </button>
+
+          <div className="language-pill">
+            <Globe2 size={14} />
+
+            <select
+              value={language}
+              onChange={(e) => {
+                setLanguage(
+                  e.target.value
+                );
+
+                localStorage.setItem(
+                  "weathergpt-language",
+                  e.target.value
+                );
+              }}
+            >
+              {Object.entries(
+                languages
+              ).map(
+                ([code, name]) => (
+                  <option
+                    key={code}
+                    value={code}
+                  >
+                    {name}
+                  </option>
+                )
+              )}
+            </select>
+          </div>
+        </div>
+      </header>
+
+      <section className="workspace">
+        <aside className="left-rail">
+          <button
+            className={`rail-mode ${
+              mode === "weather"
+                ? "active"
+                : ""
+            }`}
+            onClick={() =>
+              setMode("weather")
+            }
+          >
+            <Cloud size={19} />
+<span>
+  {t("weather")}
+</span>
+          </button>
+
+          <button
+            className={`rail-mode ${
+              mode === "farmer"
+                ? "active"
+                : ""
+            }`}
+            onClick={() =>
+              setMode("farmer")
+            }
+          >
+            <Sprout size={19} />
+<span>
+  {t("farmer")}
+</span>
+          </button>
+
+          <button
+            className={`rail-mode ${
+              mode === "traveler"
+                ? "active"
+                : ""
+            }`}
+            onClick={() =>
+              setMode("traveler")
+            }
+          >
+            <Plane size={19} />
+<span>
+  {t("traveler")}
+</span>
+          </button>
+        </aside>
+
+        <section className="main-stage">
+          <div className="hero-copy">
+            <div>
+              <p className="eyebrow">
+                <Bot size={14} />
+                {mode.toUpperCase()} MODE
+              </p>
+
+              <h1>
+                {loading
+                  ? "Reading the sky…"
+                  : `${Math.round(
+                      weather?.current
+                        .temperature_2m ??
+                        0
+                    )}°`}
+              </h1>
+
+              <p>
+                {weatherLabel(
+                  weather?.current
+                    .weather_code ?? 0
+                )}{" "}
+                · Feels like{" "}
+                {Math.round(
+                  weather?.current
+                    .apparent_temperature ??
+                    0
+                )}
+                °
+              </p>
+            </div>
+
+            <div className="hero-search">
+              <Search size={19} />
+
+              <input
+                value={searchText}
+                onFocus={() =>
+                  setMapOpen(true)
+                }
+                onChange={(e) =>
+                  setSearchText(
+                    e.target.value
+                  )
+                }
+placeholder={t("search")}
+              />
+
+              <button
+                onClick={() =>
+                  setMapOpen(true)
+                }
+              >
+                {t("map")}
+              </button>
+            </div>
+          </div>
+
+          <div className="globe-wrap">
+            <div className="globe-hud">
+              <div className="hud-chip">
+                <Wind size={14} />
+                {Math.round(
+                  weather?.current
+                    .wind_speed_10m ??
+                    0
+                )}{" "}
+                km/h
+              </div>
+
+              <div className="hud-chip">
+                <Droplets size={14} />
+                {Math.round(
+                  weather?.current
+                    .relative_humidity_2m ??
+                    0
+                )}
+                %
+              </div>
+
+              <div className="hud-chip">
+                <CloudRain size={14} />
+                {Math.round(
+                  weather?.current
+                    .precipitation ??
+                    0
+                )}{" "}
+                mm
+              </div>
+            </div>
+
+<Globe
+  ref={globeRef}
+  width={
+    typeof window !== "undefined"
+      ? Math.min(window.innerWidth - 100, 1250)
+      : 1000
+  }
+  height={520}
+  backgroundColor="rgba(0,0,0,0)"
+  globeImageUrl="https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+  bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
+  atmosphereColor="#67ddff"
+  atmosphereAltitude={0.18}
+  pointsData={globePoints}
+  pointLat="lat"
+  pointLng="lng"
+  pointRadius={0.55}
+  pointAltitude={0.05}
+  pointLabel={(d: any) => (
+    <div className="globe-point-label">
+      <strong>{d.label}</strong>
+      <span>{d.country}</span>
+    </div>
+  )}
+  onGlobeClick={({ lat, lng }: { lat: number; lng: number }) => {
+    fetch(
+      `${API}/api/geocode/reverse?lat=${lat}&lon=${lng}`
+    )
+      .then((r) => r.json())
+      .then((d) => {
+        setLocation({
+          name: d.name || "Selected point",
+          country: d.country || "",
+          lat,
+          lon: lng
+        });
+      })
+      .catch(() => {});
+  }}
+  enablePointerInteraction={true}
+  showAtmosphere={true}
+  animateIn={true}
+/>
+            <div className="globe-marker-card">
+              <div className="marker-pulse" />
+
+              <MapPin size={18} />
+
+              <div>
+                <strong>
+                  {location.name}
+                </strong>
+
+                <span>
+                  {location.country}
+                </span>
+              </div>
+
+              <b>
+                {Math.round(
+                  weather?.current
+                    .temperature_2m ??
+                    0
+                )}
+                °
+              </b>
+            </div>
+
+            <button
+              className="rotate-button"
+              onClick={() =>
+                setAutoRotate(
+                  (v) => !v
+                )
+              }
+            >
+              {autoRotate ? (
+                <Pause size={15} />
+              ) : (
+                <Play size={15} />
+              )}
+{autoRotate
+  ? t("pauseGlobe")
+  : t("rotateGlobe")}
+            </button>
+          </div>
+
+          {mode === "farmer" && (
+            <div className="mode-panel">
+              <div className="mode-title">
+                <Sprout size={18} />
+                <span>
+{t("cultivate")}
+                </span>
+              </div>
+
+              <div className="crop-list">
+                {farmerData.length ===
+                0 ? (
+                  <span>
+                    Loading crop
+                    guidance…
+                  </span>
+                ) : (
+                  farmerData.map(
+                    (c) => (
+                      <div
+                        className="crop-card"
+                        key={c.crop}
+                      >
+                        <strong>
+                          {c.crop}
+                        </strong>
+
+                        <span>
+                          {c.reason}
+                        </span>
+                      </div>
+                    )
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          {mode === "traveler" && (
+            <div className="traveler-strip">
+              <Navigation size={18} />
+
+              <div>
+<strong>
+  {t("liveTracking")}
+</strong>
+                <span>
+{t("travelDescription")}
+                </span>
+              </div>
+
+              <span className="live-dot">
+{travelerLive
+  ? t("live")
+  : t("off")}
+              </span>
+            </div>
+          )}
+
+          <WeatherCalendar
+            weather={weather}
+          />
+        </section>
+      </section>
+
+      <button
+        className="chat-fab"
+        onClick={() =>
+          setChatOpen(
+            (v) => !v
+          )
+        }
+      >
+        {chatOpen ? (
+          <X size={23} />
+        ) : (
+          <Bot size={23} />
+        )}
+      </button>
+
+      {chatOpen && (
+        <section className="chat-panel">
+          <div className="chat-header">
+            <div className="chat-avatar">
+              <Bot size={19} />
+            </div>
+
+            <div>
+              <strong>
+                WeatherGPT
+              </strong>
+
+              <span>
+                Replies in{" "}
+                {languages[language]}
+              </span>
+            </div>
+
+            <button
+              onClick={() =>
+                setChatOpen(false)
+              }
+            >
+              <X size={17} />
+            </button>
+          </div>
+
+          <div className="chat-messages">
+            {messages.length === 0 && (
+              <div className="chat-welcome">
+                <div className="welcome-icon">
+                  ✦
+                </div>
+
+                <strong>
+                  Ask me about{" "}
+                  {location.name}
+                </strong>
+
+                <p>
+                  Try “Will it rain
+                  today?”, “What should
+                  I grow?” or “Plan my
+                  day outdoors.”
+                </p>
+
+                <div className="suggestions">
+                  <button
+                    onClick={() =>
+                      sendChat(
+                        "Will it rain today?"
+                      )
+                    }
+                  >
+                    Will it rain today?
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      sendChat(
+                        "Give me today's forecast."
+                      )
+                    }
+                  >
+                    Today's forecast
+                  </button>
+
+                  <button
+                    onClick={() =>
+                      sendChat(
+                        "Is it safe for travel today?"
+                      )
+                    }
+                  >
+                    Travel safety
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {messages.map(
+              (m, i) => (
+                <div
+                  key={i}
+                  className={`chat-message ${m.role}`}
+                >
+                  {m.role ===
+                    "assistant" && (
+                    <Bot size={14} />
+                  )}
+
+                  <span>
+                    {m.text}
+                  </span>
+
+                  {m.role ===
+                    "assistant" && (
+                    <button
+                      className="speak-small"
+                      onClick={() =>
+                        speak(m.text)
+                      }
+                    >
+                      <Volume2
+                        size={13}
+                      />
+                    </button>
+                  )}
+                </div>
+              )
+            )}
+          </div>
+
+          <div className="chat-composer">
+            <button
+              className={
+                listening
+                  ? "mic-listening"
+                  : ""
+              }
+              onClick={
+                toggleVoice
+              }
+            >
+              <Mic size={18} />
+            </button>
+
+            <input
+              value={chatInput}
+              onChange={(e) =>
+                setChatInput(
+                  e.target.value
+                )
+              }
+              onKeyDown={(e) =>
+                e.key === "Enter" &&
+                sendChat()
+              }
+              placeholder="Message WeatherGPT…"
             />
 
-            <h2>
-              Finding your location
-            </h2>
+            <button
+              onClick={() =>
+                sendChat()
+              }
+            >
+              <Send size={18} />
+            </button>
+          </div>
+        </section>
+      )}
 
-            <p>
-              Please allow location
-              access so WeatherGPT can
-              show your local weather.
-            </p>
+      {mapOpen && (
+        <div className="map-overlay">
+          <div className="map-sheet">
+            <div className="map-top">
+              <div>
+                <p className="eyebrow">
+                  <Search size={13} />
+                  LIVE LOCATION MAP
+                </p>
+
+                <h2>
+                  Choose where to see
+                  the weather
+                </h2>
+
+                <p>
+                  Your current location
+                  is shown first. Select
+                  any point to make it the
+                  active weather location.
+                </p>
+              </div>
+
+              <button
+                className="icon-button"
+                onClick={() =>
+                  setMapOpen(false)
+                }
+              >
+                <X />
+              </button>
+            </div>
+
+            <LiveMap
+              current={location}
+              query={searchText}
+              onSelect={
+                chooseMapLocation
+              }
+              onLocate={
+                useCurrentLocation
+              }
+            />
           </div>
         </div>
       )}
 
-      {/* WEATHER LOADING */}
-
-      {weatherLoading && (
-        <div className="weather-loading">
-          Updating weather...
+      {locationLoading && (
+        <div className="location-toast">
+          <RefreshCw
+            size={15}
+            className="spin"
+          />
+          Finding your location…
         </div>
       )}
-
     </main>
   );
 }
 
-/*
- * MAP MODAL
- *
- * This version uses OpenStreetMap
- * through an iframe to keep the first
- * version simple and dependency-light.
- *
- * The coordinates can later be connected
- * to Leaflet/Mapbox/Google Maps.
- */
-
-function LocationMapModal({
-  currentLat,
-  currentLng,
-  onClose,
-  onSelect,
+function WeatherCalendar({
+  weather
 }: {
-  currentLat: number;
-  currentLng: number;
-  onClose: () => void;
-  onSelect: (
-    lat: number,
-    lng: number,
-    city?: string,
-    country?: string
-  ) => void;
+  weather: Weather | null;
 }) {
-  const [search, setSearch] =
-    useState("");
-
-  const [results, setResults] =
-    useState<any[]>([]);
-
-  async function searchLocation() {
-    if (!search.trim()) return;
-
-    try {
-      const response =
-        await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-            search
-          )}&limit=5`
-        );
-
-      const data =
-        await response.json();
-
-      setResults(data);
-    } catch (error) {
-      console.error(error);
-    }
-  }
+  if (!weather)
+    return null;
 
   return (
-    <div className="map-modal">
-
-      <div className="map-modal-header">
-
-        <button
-          onClick={onClose}
-        >
-          <X />
-        </button>
-
+    <section className="weather-calendar">
+      <div className="calendar-heading">
         <div>
-          <strong>
-            Choose location
-          </strong>
+          <p className="eyebrow">
+            <CalendarDays size={13} />
+            WEATHER CALENDAR
+          </p>
 
-          <small>
-            Your current location is
-            already selected.
-          </small>
+          <h2>
+            Upcoming weather
+          </h2>
         </div>
 
+        <span>
+          7-day forecast
+        </span>
       </div>
 
-      <div className="map-search">
-
-        <Search size={18} />
-
-        <input
-          value={search}
-          onChange={(event) =>
-            setSearch(
-              event.target.value
-            )
-          }
-          onKeyDown={(event) => {
-            if (
-              event.key ===
-              "Enter"
-            ) {
-              searchLocation();
-            }
-          }}
-          placeholder="Search city, country or place..."
-        />
-
-        <button
-          onClick={
-            searchLocation
-          }
-        >
-          Search
-        </button>
-
-      </div>
-
-      <div className="map-results">
-
-        <button
-          className="current-location-result"
-          onClick={() =>
-            onSelect(
-              currentLat,
-              currentLng,
-              "Current location",
-              ""
-            )
-          }
-        >
-          <LocateFixed
-            size={18}
-          />
-
-          <div>
-            <strong>
-              Current location
-            </strong>
-
-            <small>
-              {currentLat.toFixed(
-                4
-              )}
-              ,{" "}
-              {currentLng.toFixed(
-                4
-              )}
-            </small>
-          </div>
-        </button>
-
-        {results.map(
-          (result) => (
-            <button
-              className="map-result"
-              key={result.place_id}
-              onClick={() =>
-                onSelect(
-                  Number(
-                    result.lat
-                  ),
-                  Number(
-                    result.lon
-                  ),
-                  result.name,
-                  result.display_name
-                )
-              }
+      <div className="calendar-row">
+        {weather.daily.time.map(
+          (day, index) => (
+            <article
+              key={day}
+              className={`day-card ${
+                index === 0
+                  ? "today"
+                  : ""
+              }`}
             >
-              <MapPin
-                size={17}
-              />
+              <strong>
+                {index === 0
+                  ? "Today"
+                  : new Date(
+                      day
+                    ).toLocaleDateString(
+                      undefined,
+                      {
+                        weekday:
+                          "short"
+                      }
+                    )}
+              </strong>
+
+              <small>
+                {new Date(
+                  day
+                ).toLocaleDateString(
+                  undefined,
+                  {
+                    month:
+                      "short",
+                    day:
+                      "numeric"
+                  }
+                )}
+              </small>
+
+              <div className="day-icon">
+                {weatherIcon(
+                  weather.daily
+                    .weather_code[
+                    index
+                  ]
+                )}
+              </div>
+
+              <b>
+                {Math.round(
+                  weather.daily
+                    .temperature_2m_max[
+                    index
+                  ]
+                )}
+                °
+              </b>
 
               <span>
-                {
-                  result.display_name
-                }
+                {Math.round(
+                  weather.daily
+                    .temperature_2m_min[
+                    index
+                  ]
+                )}
+                °
               </span>
-            </button>
+
+              <div className="day-rain">
+                <Droplets size={12} />
+
+                {weather.daily
+                  .precipitation_probability_max[
+                  index
+                ] ?? 0}
+                %
+              </div>
+
+              <small>
+                {weatherLabel(
+                  weather.daily
+                    .weather_code[
+                    index
+                  ]
+                )}
+              </small>
+            </article>
           )
         )}
-
       </div>
-
-      <div className="map-preview">
-
-        <iframe
-          title="OpenStreetMap"
-          src={`https://www.openstreetmap.org/export/embed.html?bbox=${
-            currentLng - 0.1
-          }%2C${
-            currentLat - 0.1
-          }%2C${
-            currentLng + 0.1
-          }%2C${
-            currentLat + 0.1
-          }&layer=mapnik&marker=${currentLat}%2C${currentLng}`}
-        />
-
-      </div>
-
-    </div>
+    </section>
   );
 }
 
-function UmbrellaIcon() {
+function WeatherEffects({
+  event
+}: {
+  event: string;
+}) {
+  if (
+    event ===
+    "heavy-rain"
+  ) {
+    return (
+      <div
+        className="rain-effect"
+        aria-hidden
+      >
+        {Array.from({
+          length: 75
+        }).map((_, i) => (
+          <i
+            key={i}
+            style={{
+              left: `${
+                (i * 37) % 100
+              }%`,
+              animationDelay: `${
+                (i % 9) * -0.15
+              }s`
+            }}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (event === "storm") {
+    return (
+      <div
+        className="storm-effect"
+        aria-hidden
+      >
+        <div className="lightning-flash" />
+        <div className="storm-clouds" />
+      </div>
+    );
+  }
+
+  if (event === "clear") {
+    return (
+      <div
+        className="clear-effect"
+        aria-hidden
+      >
+        <div className="sun-orb" />
+      </div>
+    );
+  }
+
   return (
-    <span className="umbrella-icon">
-      ☂️
-    </span>
+    <div
+      className="cloud-effect"
+      aria-hidden
+    >
+      <div />
+      <div />
+      <div />
+    </div>
   );
 }

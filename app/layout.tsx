@@ -3,15 +3,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "WeatherGPT",
-  description:
-    "AI-powered multilingual weather assistant",
+  description: "AI weather intelligence with an interactive globe"
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
       <body>{children}</body>
