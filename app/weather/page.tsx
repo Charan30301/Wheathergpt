@@ -1,6 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { feature } from "topojson-client";
+import countries110m from "world-atlas/countries-110m.json";
 import {
   useCallback,
   useEffect,
@@ -39,7 +41,40 @@ const Globe = dynamic(
   () => import("react-globe.gl"),
   { ssr: false }
 );
+type GlobeLabel = {
+  name: string;
+  lat: number;
+  lng: number;
+  type: "country" | "state" | "city";
+};
 
+const globeLabels: GlobeLabel[] = [
+  { name: "India", lat: 20.59, lng: 78.96, type: "country" },
+  { name: "United States", lat: 39.8, lng: -98.6, type: "country" },
+  { name: "Canada", lat: 56.1, lng: -106.3, type: "country" },
+  { name: "Brazil", lat: -10.8, lng: -51.9, type: "country" },
+  { name: "United Kingdom", lat: 55.4, lng: -3.4, type: "country" },
+  { name: "France", lat: 46.2, lng: 2.2, type: "country" },
+  { name: "Germany", lat: 51.2, lng: 10.4, type: "country" },
+  { name: "China", lat: 35.9, lng: 104.2, type: "country" },
+  { name: "Japan", lat: 36.2, lng: 138.3, type: "country" },
+  { name: "Australia", lat: -25.3, lng: 133.8, type: "country" },
+
+  { name: "Maharashtra", lat: 19.75, lng: 75.71, type: "state" },
+  { name: "Telangana", lat: 18.11, lng: 79.02, type: "state" },
+  { name: "Karnataka", lat: 15.32, lng: 75.71, type: "state" },
+  { name: "Tamil Nadu", lat: 11.13, lng: 78.66, type: "state" },
+  { name: "Kerala", lat: 10.85, lng: 76.27, type: "state" },
+
+  { name: "Hyderabad", lat: 17.39, lng: 78.49, type: "city" },
+  { name: "Mumbai", lat: 19.08, lng: 72.88, type: "city" },
+  { name: "Delhi", lat: 28.61, lng: 77.21, type: "city" },
+  { name: "Bengaluru", lat: 12.97, lng: 77.59, type: "city" },
+  { name: "Chennai", lat: 13.08, lng: 80.27, type: "city" },
+  { name: "London", lat: 51.51, lng: -0.13, type: "city" },
+  { name: "New York", lat: 40.71, lng: -74.01, type: "city" },
+  { name: "Tokyo", lat: 35.68, lng: 139.69, type: "city" },
+];
 const LiveMap = dynamic(
   () => import("../../components/LiveMap"),
   { ssr: false }
@@ -974,6 +1009,35 @@ const chooseMapLocation =
 
     recognition.start();
   }
+const globeLabels = [
+  // Countries
+  { name: "India", lat: 20.5937, lng: 78.9629, type: "country" },
+  { name: "United States", lat: 37.0902, lng: -95.7129, type: "country" },
+  { name: "Canada", lat: 56.1304, lng: -106.3468, type: "country" },
+  { name: "Brazil", lat: -14.2350, lng: -51.9253, type: "country" },
+  { name: "Australia", lat: -25.2744, lng: 133.7751, type: "country" },
+  { name: "China", lat: 35.8617, lng: 104.1954, type: "country" },
+  { name: "Japan", lat: 36.2048, lng: 138.2529, type: "country" },
+  { name: "United Kingdom", lat: 55.3781, lng: -3.4360, type: "country" },
+  { name: "France", lat: 46.2276, lng: 2.2137, type: "country" },
+  { name: "Germany", lat: 51.1657, lng: 10.4515, type: "country" },
+  { name: "Russia", lat: 61.5240, lng: 105.3188, type: "country" },
+  { name: "South Africa", lat: -30.5595, lng: 22.9375, type: "country" },
+
+  // Major cities
+  { name: "New Delhi", lat: 28.6139, lng: 77.2090, type: "city" },
+  { name: "Mumbai", lat: 19.0760, lng: 72.8777, type: "city" },
+  { name: "Hyderabad", lat: 17.3850, lng: 78.4867, type: "city" },
+  { name: "Bengaluru", lat: 12.9716, lng: 77.5946, type: "city" },
+  { name: "Chennai", lat: 13.0827, lng: 80.2707, type: "city" },
+  { name: "Kolkata", lat: 22.5726, lng: 88.3639, type: "city" },
+  { name: "London", lat: 51.5074, lng: -0.1278, type: "city" },
+  { name: "Paris", lat: 48.8566, lng: 2.3522, type: "city" },
+  { name: "New York", lat: 40.7128, lng: -74.0060, type: "city" },
+  { name: "Tokyo", lat: 35.6762, lng: 139.6503, type: "city" },
+  { name: "Sydney", lat: -33.8688, lng: 151.2093, type: "city" },
+  { name: "Dubai", lat: 25.2048, lng: 55.2708, type: "city" }
+];
 
   const globePoints = [
     {
@@ -1247,6 +1311,18 @@ placeholder={t("search")}
   pointRadius={0.55}
   pointAltitude={0.05}
 pointLabel="label"
+  labelsData={globeLabels}
+  labelLat="lat"
+  labelLng="lng"
+  labelText="name"
+  labelSize={(d: any) =>
+    d.type === "country" ? 0.7 : 0.45
+  }
+  labelColor={() => "#ffffff"}
+  labelDotRadius={(d: any) =>
+    d.type === "city" ? 0.12 : 0
+  }
+  labelResolution={2}
   onGlobeClick={({ lat, lng }: { lat: number; lng: number }) => {
     fetch(
       `${API}/api/geocode/reverse?lat=${lat}&lon=${lng}`
