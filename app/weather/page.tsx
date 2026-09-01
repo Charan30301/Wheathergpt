@@ -1,8 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { feature } from "topojson-client";
-import countries110m from "world-atlas/countries-110m.json";
 import {
   useCallback,
   useEffect,
@@ -1039,19 +1037,17 @@ const globeLabels = [
   { name: "Dubai", lat: 25.2048, lng: 55.2708, type: "city" }
 ];
 
-  const globePoints = [
-    {
-      lat: location.lat,
-      lng: location.lon,
-      size: 1,
-      color: "#6ee7ff",
-      label: `${Math.round(
-        weather?.current
-          .temperature_2m ?? 0
-      )}°C`
-    }
-  ];
-
+const globePoints = [
+  {
+    lat: location.lat,
+    lng: location.lon,
+    size: 1,
+    color: "#6ee7ff",
+    label: `${Math.round(
+      weather?.current.temperature_2m ?? 0
+    )}°C`
+  }
+];
   return (
     <main
       className={`weather-app event-${eventType} ${
@@ -1310,18 +1306,14 @@ placeholder={t("search")}
   pointLng="lng"
   pointRadius={0.55}
   pointAltitude={0.05}
-pointLabel="label"
+  pointLabel="label"
+
   labelsData={globeLabels}
-  labelLat="lat"
-  labelLng="lng"
-  labelText="name"
-  labelSize={(d: any) =>
-    d.type === "country" ? 0.7 : 0.45
-  }
+  labelLat={(d: any) => d.lat}
+  labelLng={(d: any) => d.lng}
+  labelText={(d: any) => d.name}
+  labelSize={0.7}
   labelColor={() => "#ffffff"}
-  labelDotRadius={(d: any) =>
-    d.type === "city" ? 0.12 : 0
-  }
   labelResolution={2}
   onGlobeClick={({ lat, lng }: { lat: number; lng: number }) => {
     fetch(
