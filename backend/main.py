@@ -488,54 +488,242 @@ def local_answer(
 
     place = req.location.name
 
-    condition = (
-        "clear"
-        if code == 0
-        else "unsettled"
-    )
+    condition = "clear"
 
     if code in [
-        61,
-        63,
-        65,
-        80,
-        81,
-        82
+        61, 63, 65,
+        80, 81, 82
     ]:
-
         condition = "rainy"
 
-    if code in [
-        95,
-        96,
-        99
+    elif code in [
+        95, 96, 99
     ]:
-
         condition = "stormy"
 
-    if req.mode == "farmer":
+    elif code != 0:
+        condition = "unsettled"
+
+    # English
+    if req.language == "en":
+        if req.mode == "farmer":
+            return (
+                f"For {place}, it is about "
+                f"{temp}°C with {condition} "
+                f"conditions. Use Farmer mode "
+                f"as guidance and confirm local "
+                f"soil, season and crop-calendar "
+                f"information."
+            )
+
+        if req.mode == "traveler":
+            return (
+                f"For your current travel "
+                f"location, {place}, it is about "
+                f"{temp}°C with {condition} "
+                f"conditions, around {rain} mm "
+                f"precipitation and wind near "
+                f"{wind} km/h. Recheck before "
+                f"departure."
+            )
 
         return (
-            f"For {place}, it is about "
-            f"{temp}°C with {condition} "
-            f"conditions. Use Farmer mode "
-            f"as guidance and confirm local "
-            f"soil, season and crop-calendar "
-            f"information."
+            f"In {place}, it is about "
+            f"{temp}°C and currently "
+            f"{condition}. Precipitation is "
+            f"{rain} mm and wind is around "
+            f"{wind} km/h."
         )
 
-    if req.mode == "traveler":
+    # Telugu
+    if req.language == "te":
+        conditions = {
+            "clear": "స్పష్టమైన",
+            "rainy": "వర్షపు",
+            "stormy": "తుఫాను",
+            "unsettled": "మారుతున్న"
+        }
 
         return (
-            f"For your current travel "
-            f"location, {place}, it is about "
-            f"{temp}°C with {condition} "
-            f"conditions, around {rain} mm "
-            f"precipitation and wind near "
-            f"{wind} km/h. Recheck before "
-            f"departure."
+            f"{place}లో ప్రస్తుతం ఉష్ణోగ్రత "
+            f"సుమారు {temp}°C ఉంది. "
+            f"ప్రస్తుతం {conditions[condition]} "
+            f"వాతావరణ పరిస్థితులు ఉన్నాయి. "
+            f"వర్షపాతం {rain} మి.మీ. మరియు "
+            f"గాలి వేగం సుమారు {wind} కి.మీ/గం."
         )
 
+    # Hindi
+    if req.language == "hi":
+        conditions = {
+            "clear": "साफ",
+            "rainy": "बारिश वाला",
+            "stormy": "तूफानी",
+            "unsettled": "बदलता हुआ"
+        }
+
+        return (
+            f"{place} में अभी तापमान लगभग "
+            f"{temp}°C है। वर्तमान मौसम "
+            f"{conditions[condition]} है। "
+            f"वर्षा {rain} मिमी है और हवा की "
+            f"गति लगभग {wind} किमी/घंटा है।"
+        )
+
+    # Tamil
+    if req.language == "ta":
+        conditions = {
+            "clear": "தெளிவான",
+            "rainy": "மழையான",
+            "stormy": "புயல்",
+            "unsettled": "மாறுபடும்"
+        }
+
+        return (
+            f"{place} பகுதியில் தற்போது "
+            f"வெப்பநிலை சுமார் {temp}°C. "
+            f"வானிலை {conditions[condition]} "
+            f"நிலையில் உள்ளது. மழைப்பொழிவு "
+            f"{rain} மி.மீ. மற்றும் காற்றின் வேகம் "
+            f"சுமார் {wind} கி.மீ/மணி."
+        )
+
+    # Kannada
+    if req.language == "kn":
+        conditions = {
+            "clear": "ಸ್ಪಷ್ಟ",
+            "rainy": "ಮಳೆಯ",
+            "stormy": "ಬಿರುಗಾಳಿ",
+            "unsettled": "ಬದಲಾಗುತ್ತಿರುವ"
+        }
+
+        return (
+            f"{place} ನಲ್ಲಿ ಪ್ರಸ್ತುತ ತಾಪಮಾನ "
+            f"ಸುಮಾರು {temp}°C ಇದೆ. ಹವಾಮಾನವು "
+            f"{conditions[condition]} ಸ್ಥಿತಿಯಲ್ಲಿದೆ. "
+            f"ಮಳೆಯ ಪ್ರಮಾಣ {rain} ಮಿ.ಮೀ. ಮತ್ತು "
+            f"ಗಾಳಿಯ ವೇಗ ಸುಮಾರು {wind} ಕಿಮೀ/ಗಂ."
+        )
+
+    # Malayalam
+    if req.language == "ml":
+        conditions = {
+            "clear": "തെളിഞ്ഞ",
+            "rainy": "മഴയുള്ള",
+            "stormy": "കൊടുങ്കാറ്റുള്ള",
+            "unsettled": "മാറിക്കൊണ്ടിരിക്കുന്ന"
+        }
+
+        return (
+            f"{place} ൽ ഇപ്പോൾ താപനില "
+            f"ഏകദേശം {temp}°C ആണ്. കാലാവസ്ഥ "
+            f"{conditions[condition]} ആണ്. "
+            f"മഴ {rain} മി.മീ.യും കാറ്റിന്റെ വേഗത "
+            f"ഏകദേശം {wind} കി.മീ/മണിക്കൂറുമാണ്."
+        )
+
+    # Bengali
+    if req.language == "bn":
+        conditions = {
+            "clear": "পরিষ্কার",
+            "rainy": "বৃষ্টির",
+            "stormy": "ঝড়ো",
+            "unsettled": "পরিবর্তনশীল"
+        }
+
+        return (
+            f"{place}-এ বর্তমানে তাপমাত্রা "
+            f"প্রায় {temp}°C। আবহাওয়া "
+            f"{conditions[condition]}। বৃষ্টিপাত "
+            f"{rain} মিমি এবং বাতাসের গতি "
+            f"প্রায় {wind} কিমি/ঘণ্টা।"
+        )
+
+    # Marathi
+    if req.language == "mr":
+        conditions = {
+            "clear": "स्वच्छ",
+            "rainy": "पावसाळी",
+            "stormy": "वादळी",
+            "unsettled": "बदलते"
+        }
+
+        return (
+            f"{place} येथे सध्या तापमान "
+            f"सुमारे {temp}°C आहे. हवामान "
+            f"{conditions[condition]} आहे. "
+            f"पर्जन्यमान {rain} मिमी असून "
+            f"वाऱ्याचा वेग सुमारे {wind} किमी/ता. आहे."
+        )
+
+    # Spanish
+    if req.language == "es":
+        conditions = {
+            "clear": "despejado",
+            "rainy": "lluvioso",
+            "stormy": "tormentoso",
+            "unsettled": "variable"
+        }
+
+        return (
+            f"En {place}, la temperatura actual "
+            f"es de aproximadamente {temp}°C. "
+            f"El tiempo está {conditions[condition]}. "
+            f"La precipitación es de {rain} mm "
+            f"y el viento alcanza unos {wind} km/h."
+        )
+
+    # French
+    if req.language == "fr":
+        conditions = {
+            "clear": "dégagé",
+            "rainy": "pluvieux",
+            "stormy": "orageux",
+            "unsettled": "variable"
+        }
+
+        return (
+            f"À {place}, la température actuelle "
+            f"est d'environ {temp}°C. Le temps est "
+            f"{conditions[condition]}. Les précipitations "
+            f"sont de {rain} mm et le vent souffle à "
+            f"environ {wind} km/h."
+        )
+
+    # German
+    if req.language == "de":
+        conditions = {
+            "clear": "klar",
+            "rainy": "regnerisch",
+            "stormy": "stürmisch",
+            "unsettled": "wechselhaft"
+        }
+
+        return (
+            f"In {place} beträgt die aktuelle "
+            f"Temperatur etwa {temp}°C. Das Wetter "
+            f"ist {conditions[condition]}. Der "
+            f"Niederschlag beträgt {rain} mm und "
+            f"der Wind weht mit etwa {wind} km/h."
+        )
+
+    # Japanese
+    if req.language == "ja":
+        conditions = {
+            "clear": "晴れ",
+            "rainy": "雨",
+            "stormy": "嵐",
+            "unsettled": "不安定"
+        }
+
+        return (
+            f"{place}の現在の気温は約{temp}°Cです。"
+            f"現在の天気は{conditions[condition]}です。"
+            f"降水量は{rain}mm、風速は約"
+            f"{wind}km/hです。"
+        )
+
+    # Unknown language → English
     return (
         f"In {place}, it is about "
         f"{temp}°C and currently "
@@ -543,7 +731,6 @@ def local_answer(
         f"{rain} mm and wind is around "
         f"{wind} km/h."
     )
-
 
 @app.post("/api/chat")
 async def chat(
@@ -560,36 +747,65 @@ async def chat(
     knowledge = retrieve_knowledge(req.message)
 
     system = f"""
-You are WeatherGPT, a careful weather assistant.
-Reply in {language_name}. Do not switch language unless the user asks.
-Location: {req.location.name}, {req.location.country}
-Coordinates: {req.location.lat}, {req.location.lon}
-Mode: {req.mode}
-Weather JSON: {req.weather}
-Retrieved guidance:
+You are WeatherGPT, a careful multilingual weather assistant.
+
+IMPORTANT LANGUAGE RULE:
+The user's selected language is {language_name}.
+You MUST write your entire response ONLY in {language_name}.
+Do NOT answer in English unless the selected language is English.
+Do NOT mix English with {language_name}.
+Translate explanations, recommendations, headings, and normal weather descriptions into {language_name}.
+Keep place names such as city and country names in their commonly recognized local form when appropriate.
+Weather numbers, temperatures, dates, percentages, and units must remain accurate.
+
+Selected language code: {req.language}
+Selected language name: {language_name}
+
+Location:
+{req.location.name}, {req.location.country}
+
+Coordinates:
+{req.location.lat}, {req.location.lon}
+
+Mode:
+{req.mode}
+
+Weather data:
+{req.weather}
+
+Retrieved weather guidance:
 {knowledge}
 
-Use the supplied weather data. Do not invent weather values or alerts.
-For severe-weather safety questions, advise official local alerts.
-Keep normal answers concise and useful.
+Use only the supplied weather data.
+Do not invent weather values, forecasts, or alerts.
+For severe-weather safety questions, advise the user to check official local alerts.
+Keep normal answers concise, clear, and useful.
+
+FINAL CHECK BEFORE RESPONDING:
+1. Is the entire response written in {language_name}?
+2. Did you accidentally use English sentences?
+3. Did you mix languages?
+If yes, rewrite the response completely in {language_name} before sending it.
 """.strip()
+    
 
-    api_key = os.getenv(
-        "LLM_API_KEY",
+
+  api_key = os.getenv(  
+     "LLM_API_KEY",
         ""
-    ).strip()
+  ).strip()
 
-    model = os.getenv(
-        "LLM_MODEL",
+  model = os.getenv(
+    "LLM_MODEL",
         ""
-    ).strip()
+  ).strip()
 
-    base_url = os.getenv(
+  base_url = os.getenv(
         "LLM_BASE_URL",
         "https://api.openai.com/v1"
-    ).rstrip("/")
+  ).rstrip("/")
 
-    if api_key and model:
+  if api_key and model:
 
         try:
 

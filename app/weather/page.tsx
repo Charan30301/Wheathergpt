@@ -122,7 +122,12 @@ const translations: Record<
     weather: "Weather",
     farmer: "Farmer",
     traveler: "Traveler",
-    search: "Search any place or ask WeatherGPT…",
+weatherCalendar: "WEATHER CALENDAR",
+oday: "Today",
+upcomingWeather: "Upcoming weather",
+forecast: "7-day forecast",  
+
+  search: "Search any place or ask WeatherGPT…",
     map: "Map",
     pauseGlobe: "Pause globe",
     rotateGlobe: "Rotate globe",
@@ -144,6 +149,11 @@ const translations: Record<
     weather: "వాతావరణం",
     farmer: "రైతు",
     traveler: "ప్రయాణం",
+weatherCalendar: "వాతావరణ క్యాలెండర్",
+
+today: "ఈరోజు",
+upcomingWeather: "రాబోయే వాతావరణం",
+forecast: "7 రోజుల సూచన",
     search: "ఏదైనా ప్రదేశాన్ని వెతకండి లేదా WeatherGPTని అడగండి…",
     map: "మ్యాప్",
     pauseGlobe: "గ్లోబ్ ఆపండి",
@@ -164,8 +174,13 @@ const translations: Record<
     farmerMode: "किसान मोड",
     travelerMode: "यात्री मोड",
     weather: "मौसम",
+
     farmer: "किसान",
     traveler: "यात्री",
+weatherCalendar: "मौसम कैलेंडर",
+today: "आज",
+upcomingWeather: "आगामी मौसम",
+forecast: "7 दिनों का पूर्वानुमान",
     search: "कोई स्थान खोजें या WeatherGPT से पूछें…",
     map: "मानचित्र",
     pauseGlobe: "ग्लोब रोकें",
@@ -188,6 +203,10 @@ const translations: Record<
     weather: "வானிலை",
     farmer: "விவசாயி",
     traveler: "பயணி",
+weatherCalendar: "வானிலை நாட்காட்டி",
+today: "இன்று",
+upcomingWeather: "வரவிருக்கும் வானிலை",
+forecast: "7 நாள் முன்னறிவிப்பு",
     search: "எந்த இடத்தையும் தேடுங்கள் அல்லது WeatherGPT-ஐ கேளுங்கள்…",
     map: "வரைபடம்",
     pauseGlobe: "குளோபை நிறுத்து",
@@ -201,15 +220,201 @@ const translations: Record<
     off: "ஆஃப்",
     feelsLike: "உணரப்படும் வெப்பநிலை",
     repliesIn: "பதில்கள்"
+  },
+kn: {
+    weatherMode: "ಹವಾಮಾನ ಮೋಡ್",
+    farmerMode: "ರೈತ ಮೋಡ್",
+    travelerMode: "ಪ್ರಯಾಣಿಕ ಮೋಡ್",
+    weather: "ಹವಾಮಾನ",
+    farmer: "ರೈತ",
+    traveler: "ಪ್ರಯಾಣಿಕ",
+weatherCalendar: "ಹವಾಮಾನ ಕ್ಯಾಲೆಂಡರ್",
+today: "ಇಂದು",
+upcomingWeather: "ಮುಂಬರುವ ಹವಾಮಾನ",
+forecast: "7 ದಿನಗಳ ಮುನ್ಸೂಚನೆ",
+    search: "ಯಾವುದೇ ಸ್ಥಳವನ್ನು ಹುಡುಕಿ ಅಥವಾ WeatherGPT ಅನ್ನು ಕೇಳಿ…",
+    map: "ನಕ್ಷೆ",
+    pauseGlobe: "ಗ್ಲೋಬ್ ನಿಲ್ಲಿಸಿ",
+    rotateGlobe: "ಗ್ಲೋಬ್ ತಿರುಗಿಸಿ",
+    cultivate: "ನಾನು ಇಲ್ಲಿ ಏನು ಬೆಳೆಸಬಹುದು?",
+    loadingCrops: "ಬೆಳೆ ಸಲಹೆ ಲೋಡ್ ಆಗುತ್ತಿದೆ…",
+    liveTracking: "ಲೈವ್ ಪ್ರಯಾಣ ಟ್ರ್ಯಾಕಿಂಗ್",
+    live: "ಲೈವ್",
+    off: "ಆಫ್",
+    feelsLike: "ಅನುಭವವಾಗುವ ತಾಪಮಾನ",
+    repliesIn: "ಉತ್ತರಗಳು"
+  },
+
+  ml: {
+    weatherMode: "കാലാവസ്ഥ മോഡ്",
+    farmerMode: "കർഷക മോഡ്",
+    travelerMode: "യാത്രിക മോഡ്",
+    weather: "കാലാവസ്ഥ",
+    farmer: "കർഷകൻ",
+    traveler: "യാത്രികൻ",
+weatherCalendar: "കാലാവസ്ഥാ കലണ്ടർ",
+today: "ഇന്ന്",
+upcomingWeather: "വരാനിരിക്കുന്ന കാലാവസ്ഥ",
+forecast: "7 ദിവസത്തെ പ്രവചനം",
+    search: "ഏത് സ്ഥലവും തിരയുക അല്ലെങ്കിൽ WeatherGPT-യോട് ചോദിക്കുക…",
+    map: "മാപ്പ്",
+    pauseGlobe: "ഗ്ലോബ് നിർത്തുക",
+    rotateGlobe: "ഗ്ലോബ് തിരിക്കുക",
+    cultivate: "എനിക്ക് ഇവിടെ എന്ത് കൃഷി ചെയ്യാം?",
+    loadingCrops: "വിള നിർദ്ദേശങ്ങൾ ലോഡ് ചെയ്യുന്നു…",
+    liveTracking: "തത്സമയ യാത്രാ ട്രാക്കിംഗ്",
+    live: "തത്സമയം",
+    off: "ഓഫ്",
+    feelsLike: "അനുഭവപ്പെടുന്ന താപനില",
+    repliesIn: "മറുപടികൾ"
+  },
+
+  bn: {
+    weatherMode: "আবহাওয়া মোড",
+    farmerMode: "কৃষক মোড",
+    travelerMode: "ভ্রমণকারী মোড",
+    weather: "আবহাওয়া",
+    farmer: "কৃষক",
+    traveler: "ভ্রমণকারী",
+weatherCalendar: "আবহাওয়া ক্যালেন্ডার",
+today: "আজ",
+upcomingWeather: "আসন্ন আবহাওয়া",
+forecast: "৭ দিনের পূর্বাভাস",
+    search: "যেকোনো স্থান খুঁজুন বা WeatherGPT-কে জিজ্ঞাসা করুন…",
+    map: "মানচিত্র",
+    pauseGlobe: "গ্লোব থামান",
+    rotateGlobe: "গ্লোব ঘোরান",
+    cultivate: "আমি এখানে কী চাষ করতে পারি?",
+    loadingCrops: "ফসলের পরামর্শ লোড হচ্ছে…",
+    liveTracking: "লাইভ ভ্রমণ ট্র্যাকিং",
+    live: "লাইভ",
+    off: "বন্ধ",
+    feelsLike: "অনুভূত তাপমাত্রা",
+    repliesIn: "উত্তর"
+  },
+
+  mr: {
+    weatherMode: "हवामान मोड",
+    farmerMode: "शेतकरी मोड",
+    travelerMode: "प्रवासी मोड",
+    weather: "हवामान",
+    farmer: "शेतकरी",
+    traveler: "प्रवासी",
+weatherCalendar: "हवामान कॅलेंडर",
+today: "आज",
+upcomingWeather: "आगामी हवामान",
+forecast: "७ दिवसांचा अंदाज",
+    search: "कोणतेही ठिकाण शोधा किंवा WeatherGPT ला विचारा…",
+    map: "नकाशा",
+    pauseGlobe: "ग्लोब थांबवा",
+    rotateGlobe: "ग्लोब फिरवा",
+    cultivate: "मी येथे काय पिकवू शकतो?",
+    loadingCrops: "पिकांचा सल्ला लोड होत आहे…",
+    liveTracking: "थेट प्रवास ट्रॅकिंग",
+    live: "थेट",
+    off: "बंद",
+    feelsLike: "जाणवणारे तापमान",
+    repliesIn: "उत्तरे"
+  },
+
+  es: {
+    weatherMode: "MODO CLIMA",
+    farmerMode: "MODO AGRICULTOR",
+    travelerMode: "MODO VIAJERO",
+    weather: "Clima",
+    farmer: "Agricultor",
+    traveler: "Viajero",
+weatherCalendar: "CALENDARIO DEL TIEMPO",
+today: "Hoy",
+
+upcomingWeather: "Próximo tiempo",
+forecast: "Pronóstico de 7 días",
+    search: "Busca cualquier lugar o pregunta a WeatherGPT…",
+    map: "Mapa",
+    pauseGlobe: "Pausar globo",
+    rotateGlobe: "Girar globo",
+    cultivate: "¿Qué puedo cultivar aquí?",
+    loadingCrops: "Cargando consejos de cultivos…",
+    liveTracking: "Seguimiento de viaje en vivo",
+    live: "EN VIVO",
+    off: "APAGADO",
+    feelsLike: "Sensación térmica",
+    repliesIn: "Respuestas"
+  },
+
+  fr: {
+    weatherMode: "MODE MÉTÉO",
+    farmerMode: "MODE AGRICULTEUR",
+    travelerMode: "MODE VOYAGEUR",
+    weather: "Météo",
+    farmer: "Agriculteur",
+    traveler: "Voyageur",
+weatherCalendar: "CALENDRIER MÉTÉO",
+today: "Aujourd'hui",
+upcomingWeather: "Météo à venir",
+forecast: "Prévisions sur 7 jours",
+    search: "Recherchez un lieu ou demandez à WeatherGPT…",
+    map: "Carte",
+    pauseGlobe: "Mettre le globe en pause",
+    rotateGlobe: "Faire tourner le globe",
+    cultivate: "Que puis-je cultiver ici ?",
+    loadingCrops: "Chargement des conseils agricoles…",
+    liveTracking: "Suivi de voyage en direct",
+    live: "EN DIRECT",
+    off: "DÉSACTIVÉ",
+    feelsLike: "Ressenti",
+    repliesIn: "Réponses"
+  },
+
+  de: {
+    weatherMode: "WETTERMODUS",
+    farmerMode: "LANDWIRTSCHAFTSMODUS",
+    travelerMode: "REISEMODUS",
+    weather: "Wetter",
+    farmer: "Landwirtschaft",
+    traveler: "Reisender",
+weatherCalendar: "WETTERKALENDER",
+today: "Heute",
+upcomingWeather: "Kommendes Wetter",
+forecast: "7-Tage-Vorhersage",
+    search: "Ort suchen oder WeatherGPT fragen…",
+    map: "Karte",
+    pauseGlobe: "Globus pausieren",
+    rotateGlobe: "Globus drehen",
+    cultivate: "Was kann ich hier anbauen?",
+    loadingCrops: "Anbauempfehlungen werden geladen…",
+    liveTracking: "Live-Reiseverfolgung",
+    live: "LIVE",
+    off: "AUS",
+    feelsLike: "Gefühlt",
+    repliesIn: "Antworten"
+  },
+
+  ja: {
+    weatherMode: "天気モード",
+    farmerMode: "農家モード",
+    travelerMode: "旅行モード",
+    weather: "天気",
+    farmer: "農業",
+    traveler: "旅行者",
+weatherCalendar: "天気カレンダー",
+today: "今日",
+upcomingWeather: "今後の天気",
+forecast: "7日間の予報",
+    search: "場所を検索するか、WeatherGPTに質問してください…",
+    map: "地図",
+
+    pauseGlobe: "地球儀を一時停止",
+    rotateGlobe: "地球儀を回す",
+    cultivate: "ここでは何を栽培できますか？",
+    loadingCrops: "作物のアドバイスを読み込んでいます…",
+    liveTracking: "旅行のライブ追跡",
+    live: "ライブ",
+    off: "オフ",
+    feelsLike: "体感温度",
+    repliesIn: "回答"
   }
 };
-function t(key: string) {
-  return (
-    translations[language]?.[key] ||
-    translations.en[key] ||
-    key
-  );
-}
 function weatherLabel(code: number) {
   if (code === 0) return "Clear sky";
 
@@ -254,24 +459,33 @@ function weatherIcon(code: number) {
 
   return <Cloud size={20} />;
 }
-
 export default function WeatherPage() {
-  const [language, setLanguage] =
-    useState("en");
-const t = (key: string) =>
-  translations[language]?.[key] ||
-  translations.en[key] ||
-  key;
+  const [language, setLanguage] = useState(() => {
+    if (typeof window !== "undefined") {
+      return (
+        localStorage.getItem("weathergpt-language") ||
+        "en"
+      );
+    }
+
+    return "en";
+  });
+
+  const t = (key: string) =>
+    translations[language]?.[key] ||
+    translations.en[key] ||
+    key;
+
   const [mode, setMode] =
     useState<Mode>("weather");
 
-const [location, setLocation] =
-  useState<Location>({
-    name: "India",
-    country: "India",
-    lat: 20.5937,
-    lon: 78.9629
-  });
+  const [location, setLocation] =
+    useState<Location>({
+      name: "India",
+      country: "India",
+      lat: 20.5937,
+      lon: 78.9629
+    });
   const [weather, setWeather] =
     useState<Weather | null>(null);
 
@@ -425,20 +639,35 @@ const [location, setLocation] =
     useCurrentLocation();
   }, [useCurrentLocation]);
 
-  useEffect(() => {
-    if (!globeRef.current)
-      return;
+useEffect(() => {
+  if (!globeRef.current)
+    return;
 
-    globeRef.current.pointOfView(
-      {
-        lat: location.lat,
-        lng: location.lon,
-        altitude: 1.55
-      },
-      1400
-    );
-  }, [location]);
+  const controls =
+    globeRef.current.controls();
 
+  // Stop rotation while flying to the new location
+  controls.autoRotate = false;
+
+  // Move the selected location to the front
+  globeRef.current.pointOfView(
+    {
+      lat: location.lat,
+      lng: location.lon,
+      altitude: 1.55
+    },
+    2500
+  );
+
+  // Start rotating again after reaching the location
+  const timer = setTimeout(() => {
+    controls.autoRotate = true;
+  }, 2600);
+
+  return () => {
+    clearTimeout(timer);
+  };
+}, [location]);
   useEffect(() => {
     if (!globeRef.current)
       return;
@@ -586,14 +815,12 @@ const [location, setLocation] =
 
       return "cloud";
     }, [weather]);
-
-  const chooseMapLocation =
-    (loc: Location) => {
-      setLocation(loc);
-      setMapOpen(false);
-      setSearchText("");
-    };
-
+const chooseMapLocation =
+  (loc: Location) => {
+    setLocation(loc);
+    setMapOpen(false);
+    setSearchText("");
+  };
   async function sendChat(
     preset?: string
   ) {
@@ -1019,12 +1246,7 @@ placeholder={t("search")}
   pointLng="lng"
   pointRadius={0.55}
   pointAltitude={0.05}
-  pointLabel={(d: any) => (
-    <div className="globe-point-label">
-      <strong>{d.label}</strong>
-      <span>{d.country}</span>
-    </div>
-  )}
+pointLabel="label"
   onGlobeClick={({ lat, lng }: { lat: number; lng: number }) => {
     fetch(
       `${API}/api/geocode/reverse?lat=${lat}&lon=${lng}`
@@ -1043,6 +1265,7 @@ placeholder={t("search")}
   enablePointerInteraction={true}
   showAtmosphere={true}
   animateIn={true}
+
 />
             <div className="globe-marker-card">
               <div className="marker-pulse" />
@@ -1149,7 +1372,8 @@ placeholder={t("search")}
 
           <WeatherCalendar
             weather={weather}
-          />
+t={t}          
+/>
         </section>
       </section>
 
@@ -1381,12 +1605,13 @@ placeholder={t("search")}
 }
 
 function WeatherCalendar({
-  weather
+  weather,
+  t
 }: {
   weather: Weather | null;
+  t: (key: string) => string;
 }) {
-  if (!weather)
-    return null;
+  if (!weather) return null;
 
   return (
     <section className="weather-calendar">
@@ -1394,113 +1619,68 @@ function WeatherCalendar({
         <div>
           <p className="eyebrow">
             <CalendarDays size={13} />
-            WEATHER CALENDAR
+            {t("weatherCalendar")}
           </p>
 
-          <h2>
-            Upcoming weather
-          </h2>
+          <h2>{t("upcomingWeather")}</h2>
         </div>
 
-        <span>
-          7-day forecast
-        </span>
+        <span>{t("forecast")}</span>
       </div>
 
       <div className="calendar-row">
-        {weather.daily.time.map(
-          (day, index) => (
-            <article
-              key={day}
-              className={`day-card ${
-                index === 0
-                  ? "today"
-                  : ""
-              }`}
-            >
-              <strong>
-                {index === 0
-                  ? "Today"
-                  : new Date(
-                      day
-                    ).toLocaleDateString(
-                      undefined,
-                      {
-                        weekday:
-                          "short"
-                      }
-                    )}
-              </strong>
+        {weather.daily.time.map((day, index) => (
+          <article
+            key={day}
+            className={`day-card ${index === 0 ? "today" : ""}`}
+          >
+            <strong>
+              {index === 0
+                ? t("today")
+                : new Date(day).toLocaleDateString(undefined, {
+                    weekday: "short"
+                  })}
+            </strong>
 
-              <small>
-                {new Date(
-                  day
-                ).toLocaleDateString(
-                  undefined,
-                  {
-                    month:
-                      "short",
-                    day:
-                      "numeric"
-                  }
-                )}
-              </small>
+            <small>
+              {new Date(day).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric"
+              })}
+            </small>
 
-              <div className="day-icon">
-                {weatherIcon(
-                  weather.daily
-                    .weather_code[
-                    index
-                  ]
-                )}
-              </div>
+            <div className="day-icon">
+              {weatherIcon(weather.daily.weather_code[index])}
+            </div>
 
-              <b>
-                {Math.round(
-                  weather.daily
-                    .temperature_2m_max[
-                    index
-                  ]
-                )}
-                °
-              </b>
+            <b>
+              {Math.round(
+                weather.daily.temperature_2m_max[index]
+              )}
+              °
+            </b>
 
-              <span>
-                {Math.round(
-                  weather.daily
-                    .temperature_2m_min[
-                    index
-                  ]
-                )}
-                °
-              </span>
+            <span>
+              {Math.round(
+                weather.daily.temperature_2m_min[index]
+              )}
+              °
+            </span>
 
-              <div className="day-rain">
-                <Droplets size={12} />
+            <div className="day-rain">
+              <Droplets size={12} />
+              {weather.daily.precipitation_probability_max[index] ?? 0}%
+            </div>
 
-                {weather.daily
-                  .precipitation_probability_max[
-                  index
-                ] ?? 0}
-                %
-              </div>
-
-              <small>
-                {weatherLabel(
-                  weather.daily
-                    .weather_code[
-                    index
-                  ]
-                )}
-              </small>
-            </article>
-          )
-        )}
+            <small>
+              {weatherLabel(weather.daily.weather_code[index])}
+            </small>
+          </article>
+        ))}
       </div>
     </section>
   );
 }
-
 function WeatherEffects({
   event
 }: {
