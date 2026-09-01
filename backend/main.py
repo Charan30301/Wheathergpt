@@ -787,26 +787,21 @@ FINAL CHECK BEFORE RESPONDING:
 3. Did you mix languages?
 If yes, rewrite the response completely in {language_name} before sending it.
 """.strip()
-    
-
-
-  api_key = os.getenv(  
-     "LLM_API_KEY",
+    api_key = os.getenv(  
+        "LLM_API_KEY",
         ""
-  ).strip()
-
-  model = os.getenv(
-    "LLM_MODEL",
+    ).strip()
+    model = os.getenv(
+        "LLM_MODEL",
         ""
-  ).strip()
-
-  base_url = os.getenv(
+    ).strip()
+    base_url = os.getenv(
         "LLM_BASE_URL",
         "https://api.openai.com/v1"
-  ).rstrip("/")
-
-  if api_key and model:
-
+    ).rstrip("/")
+    if api_key and model:
+        
+        
         try:
 
             from openai import (
