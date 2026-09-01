@@ -744,7 +744,9 @@ async def chat(
         )
     )
 
-    knowledge = retrieve_knowledge(req.message)
+    knowledge = retrieve_knowledge(
+        req.message
+    )
 
     system = f"""
 You are WeatherGPT, a careful multilingual weather assistant.
@@ -787,21 +789,24 @@ FINAL CHECK BEFORE RESPONDING:
 3. Did you mix languages?
 If yes, rewrite the response completely in {language_name} before sending it.
 """.strip()
-    api_key = os.getenv(  
+
+    api_key = os.getenv(
         "LLM_API_KEY",
         ""
     ).strip()
+
     model = os.getenv(
         "LLM_MODEL",
         ""
     ).strip()
+
     base_url = os.getenv(
         "LLM_BASE_URL",
         "https://api.openai.com/v1"
     ).rstrip("/")
+
     if api_key and model:
-        
-        
+
         try:
 
             from openai import (
@@ -819,23 +824,16 @@ If yes, rewrite the response completely in {language_name} before sending it.
                 .completions
                 .create(
                     model=model,
-
                     messages=[
                         {
-                            "role":
-                                "system",
-                            "content":
-                                system
+                            "role": "system",
+                            "content": system
                         },
-
                         {
-                            "role":
-                                "user",
-                            "content":
-                                req.message
+                            "role": "user",
+                            "content": req.message
                         }
                     ],
-
                     temperature=0.2
                 )
             )
@@ -850,23 +848,18 @@ If yes, rewrite the response completely in {language_name} before sending it.
 
             return {
                 "answer": answer,
-                "language":
-                    req.language,
-                "source":
-                    "llm-rag"
+                "language": req.language,
+                "source": "llm-rag"
             }
 
         except Exception:
             pass
 
     return {
-        "answer":
-            local_answer(
-                req,
-                knowledge
-            ),
-        "language":
-            req.language,
-        "source":
-            "local-rag-fallback"
-    }
+        "answer": local_answer(
+            req,
+            knowledge
+        ),
+        "language": req.language,
+        "source": "local-rag-fallback"
+            }
